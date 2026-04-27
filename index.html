@@ -42,7 +42,6 @@
     <!-- Tab Navigation -->
     <nav class="tab-nav" id="tab-nav" role="tablist" aria-label="Dashboard sections">
         <button class="tab-btn active" data-tab="overview" role="tab" id="tab-overview" aria-selected="true" aria-controls="pane-overview">Overview</button>
-        <button class="tab-btn" data-tab="explorer" role="tab" id="tab-explorer" aria-selected="false" aria-controls="pane-explorer">Paper Explorer</button>
         <button class="tab-btn" data-tab="conference" role="tab" id="tab-conference" aria-selected="false" aria-controls="pane-conference">Conference &amp; Venue</button>
         <button class="tab-btn" data-tab="taxonomy" role="tab" id="tab-taxonomy" aria-selected="false" aria-controls="pane-taxonomy">Taxonomy &amp; Methods</button>
         <button class="tab-btn" data-tab="intersections" role="tab" id="tab-intersections" aria-selected="false" aria-controls="pane-intersections">Intersections</button>
@@ -165,48 +164,7 @@
             </div>
         </section>
 
-        <!-- Tab 2: Paper Explorer -->
-        <section class="tab-pane" id="pane-explorer" role="tabpanel" aria-labelledby="tab-explorer">
-            <div class="explorer-controls">
-                <input type="text" class="search-input" id="explorer-search" placeholder="Search papers by title, author, venue, abstract...">
-                <div class="msel" id="msel-category"></div>
-                <div class="msel" id="msel-year"></div>
-                <div class="msel" id="msel-venue-type"></div>
-                <div class="msel" id="msel-ethics"></div>
-                <div class="msel" id="msel-moral-psych"></div>
-                <div class="msel" id="msel-religion"></div>
-                <div class="msel" id="msel-model"></div>
-                <div class="msel" id="msel-flag"></div>
-                <div class="explorer-meta">
-                    <span id="explorer-count">0 papers</span>
-                    <select id="explorer-page-size">
-                        <option value="25">25 per page</option>
-                        <option value="50" selected>50 per page</option>
-                        <option value="100">100 per page</option>
-                    </select>
-                </div>
-            </div>
-            <div class="explorer-table-wrap">
-                <table class="explorer-table" id="explorer-table">
-                    <thead>
-                        <tr>
-                            <th class="col-year sortable" data-sort="y">Year <span class="sort-arrow"></span></th>
-                            <th class="col-paper sortable" data-sort="t">Paper <span class="sort-arrow"></span></th>
-                            <th class="col-venue sortable" data-sort="cc">Venue <span class="sort-arrow"></span></th>
-                            <th class="col-ethics sortable" data-sort="eo">Ethics <span class="sort-arrow"></span></th>
-                            <th class="col-moral-psych">Moral Psych</th>
-                            <th class="col-religion">Religion</th>
-                            <th class="col-models">Model</th>
-                            <th class="col-flags">Flags</th>
-                        </tr>
-                    </thead>
-                    <tbody id="explorer-tbody"></tbody>
-                </table>
-            </div>
-            <div class="pagination" id="explorer-pagination"></div>
-        </section>
-
-        <!-- Tab 3: Conference & Venue -->
+        <!-- Tab 2: Conference & Venue -->
         <section class="tab-pane" id="pane-conference" role="tabpanel" aria-labelledby="tab-conference">
             <div class="sub-nav" id="conf-sub-nav">
                 <button class="sub-btn active" data-sub="conf-overview">Overview</button>

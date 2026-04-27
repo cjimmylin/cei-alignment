@@ -1,6 +1,6 @@
 /**
  * CEI Dashboard v9 — Application Logic (v6.1 Extensibility Refactor)
- * FilterState singleton, tab switching, Paper Explorer, filter bar rendering
+ * FilterState singleton, tab switching, filter bar rendering
  * Phase 1: FILTER_DIMS registry — single source of truth for all filterable dimensions.
  * Adding a new filter = 1 registry entry (~8 lines) + 1 HTML <div>.
  */
@@ -289,9 +289,9 @@ const TabManager = {
         if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
         if (pane) pane.classList.add('active');
 
-        // Show preset bar only on Explorer tab
+        // Preset bar is hidden permanently (Paper Explorer removed in alignment fork)
         const presetBar = document.getElementById('preset-bar');
-        if (presetBar) presetBar.style.display = tabId === 'explorer' ? '' : 'none';
+        if (presetBar) presetBar.style.display = 'none';
 
         // Lazy init charts for this tab
         if (!this._initialized.has(tabId) && typeof Charts !== 'undefined') {
@@ -361,7 +361,8 @@ const FilterBar = {
     init() {
         document.getElementById('btn-clear-filters').addEventListener('click', () => {
             FilterState.clear();
-            document.getElementById('explorer-search').value = '';
+            const searchEl = document.getElementById('explorer-search');
+            if (searchEl) searchEl.value = '';
         });
         // Delegated click handler for chip remove buttons (set up once, never re-bound)
         document.getElementById('filter-chips').addEventListener('click', (e) => {
@@ -369,7 +370,8 @@ const FilterBar = {
             if (!el) return;
             if (el.dataset.action === 'clear-search') {
                 FilterState.searchQuery = '';
-                document.getElementById('explorer-search').value = '';
+                const searchEl = document.getElementById('explorer-search');
+                if (searchEl) searchEl.value = '';
                 FilterState.notify();
             } else {
                 FilterState.toggle(el.dataset.dim, isNaN(el.dataset.val) ? el.dataset.val : +el.dataset.val);
@@ -398,139 +400,6 @@ const FilterBar = {
         }
         chips.innerHTML = html;
         count.textContent = `${filtered.length} of ${DATA.agg.total} papers`;
-    }
-};
-
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PAPER EXPLORER
-// ═══════════════════════════════════════════════════════════════════════════
-
-const Explorer = {
-    _page: 1,
-    _pageSize: 50,
-    _sortKey: 'y',
-    _sortDir: -1,  // -1 = desc
-    _papers: [],
-    _expandedIdx: null,
-    _totalPages: 1,
-
-    init() {
-        // Delegated pagination handler (Phase 4A: set up once, never re-bound)
-        document.getElementById('explorer-pagination').addEventListener('click', (e) => {
-            const btn = e.target.closest('.page-btn[data-page]');
-            if (!btn || btn.disabled) return;
-            const pg = +btn.dataset.page;
-            if (pg >= 1 && pg <= this._totalPages) {
-                this._page = pg;
-                this._expandedIdx = null;
-                this.render(this._papers);
-                document.getElementById('pane-explorer').scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-
-        // Search
-        const searchEl = document.getElementById('explorer-search');
-        let debounce = null;
-        searchEl.addEventListener('input', () => {
-            clearTimeout(debounce);
-            debounce = setTimeout(() => FilterState.setSearch(searchEl.value), 200);
-        });
-
-        // Page size
-        document.getElementById('explorer-page-size').addEventListener('change', (e) => {
-            this._pageSize = +e.target.value;
-            this._page = 1;
-            this.render(FilterState.getFilteredPapers());
-        });
-
-        // Sort headers
-        document.querySelectorAll('.sortable').forEach(th => {
-            th.addEventListener('click', () => {
-                const key = th.dataset.sort;
-                if (this._sortKey === key) this._sortDir *= -1;
-                else { this._sortKey = key; this._sortDir = -1; }
-                this.render(this._papers);
-            });
-        });
-
-        // Delegated click handler for paper rows (set up once, never re-bound)
-        document.getElementById('explorer-tbody').addEventListener('click', (e) => {
-            const row = e.target.closest('.paper-row');
-            if (!row) return;
-            const idx = +row.dataset.idx;
-            this._expandedIdx = this._expandedIdx === idx ? null : idx;
-            this.render(this._papers);
-        });
-
-        // Subscribe to filter changes
-        FilterState.subscribe(papers => {
-            this._page = 1;
-            this._expandedIdx = null;
-            this.render(papers);
-        });
-    },
-
-    render(papers) {
-        this._papers = papers || [];
-        const sorted = [...this._papers].sort((a, b) => {
-            const va = a[this._sortKey], vb = b[this._sortKey];
-            if (typeof va === 'string') return va.localeCompare(vb) * this._sortDir;
-            return (va - vb) * this._sortDir;
-        });
-
-        const total = sorted.length;
-        const totalPages = Math.max(1, Math.ceil(total / this._pageSize));
-        if (this._page > totalPages) this._page = totalPages;
-        const start = (this._page - 1) * this._pageSize;
-        const pageItems = sorted.slice(start, start + this._pageSize);
-
-        const countEl = document.getElementById('explorer-count');
-        if (FilterState.isActive()) {
-            countEl.textContent = `${fmt(total)} of ${fmt(DATA.agg.total)} papers`;
-            countEl.classList.add('count-filtered');
-        } else {
-            countEl.textContent = `${fmt(total)} papers`;
-            countEl.classList.remove('count-filtered');
-        }
-
-        // Update sort arrows
-        document.querySelectorAll('.sortable .sort-arrow').forEach(el => el.textContent = '');
-        const activeHeader = document.querySelector(`.sortable[data-sort="${this._sortKey}"] .sort-arrow`);
-        if (activeHeader) activeHeader.textContent = this._sortDir > 0 ? ' \u25B2' : ' \u25BC';
-
-        // Render table body using shared renderPaperRow / renderPaperDetail
-        const tbody = document.getElementById('explorer-tbody');
-        let html = '';
-        for (const p of pageItems) {
-            html += renderPaperRow(p);
-            if (this._expandedIdx === p.i) html += renderPaperDetail(p);
-        }
-        tbody.innerHTML = html;
-
-        // Pagination
-        this._renderPagination(totalPages);
-    },
-
-    _renderPagination(totalPages) {
-        this._totalPages = totalPages;
-        const container = document.getElementById('explorer-pagination');
-        if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-        let html = '';
-        html += `<button class="page-btn" data-page="${this._page - 1}" ${this._page <= 1 ? 'disabled' : ''}>Prev</button>`;
-
-        const pages = getPaginationRange(this._page, totalPages);
-        for (const pg of pages) {
-            if (pg === '...') {
-                html += `<span class="page-btn" style="border:none;cursor:default;">...</span>`;
-            } else {
-                html += `<button class="page-btn ${pg === this._page ? 'active' : ''}" data-page="${pg}">${pg}</button>`;
-            }
-        }
-        html += `<button class="page-btn" data-page="${this._page + 1}" ${this._page >= totalPages ? 'disabled' : ''}>Next</button>`;
-
-        container.innerHTML = html;
     }
 };
 
@@ -968,7 +837,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ThemeManager.init();
     TabManager.init();
     FilterBar.init();
-    Explorer.init();
 
     // Populate header KPIs
     document.getElementById('kpi-total').textContent = fmt(DATA.agg.total);
@@ -992,9 +860,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial render of explorer
-    Explorer.render(DATA.papers);
-
     // Back to Top
     const bttBtn = document.getElementById('back-to-top');
     window.addEventListener('scroll', () => {
@@ -1002,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
     bttBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-    // URL state (after explorer render so restore can apply filters)
+    // URL state (restore can apply filters)
     URLState.init();
     URLState._restore();
 
@@ -1206,7 +1071,8 @@ function _initFilterPresets() {
                 // Deactivate — clear filters
                 activePreset = null;
                 FilterState.clear();
-                document.getElementById('explorer-search').value = '';
+                const searchEl1 = document.getElementById('explorer-search');
+                if (searchEl1) searchEl1.value = '';
                 return;
             }
 
@@ -1214,7 +1080,8 @@ function _initFilterPresets() {
             activePreset = preset;
             btn.classList.add('active');
             FilterState.clear();
-            document.getElementById('explorer-search').value = '';
+            const searchEl2 = document.getElementById('explorer-search');
+            if (searchEl2) searchEl2.value = '';
 
             const config = FILTER_PRESETS[preset];
             if (!config) return;
@@ -1235,8 +1102,7 @@ function _initFilterPresets() {
                 config.values.forEach(v => FilterState.toggle(config.dim, v));
             }
 
-            // Switch to Explorer tab to show results
-            TabManager.switchTab('explorer');
+            // (Explorer tab removed in alignment fork; presets apply filters globally without navigating.)
         });
     });
 
