@@ -936,3 +936,16 @@ button.chip-remove:hover { opacity: 1; }
     .overview-digest { padding: 16px; }
     .digest-lead { font-size: 14px; }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Alignment fork: hide all paper lists site-wide.
+   Removes the per-tab paper-list panels, their section headers, and the
+   heatmap-cell drill-down panel. The renderPaperList JS still runs but its
+   output is invisible. !important is needed to override the JS-set inline
+   `display: block` that opens the heatmap drill-down on cell click.
+   ─────────────────────────────────────────────────────────────────────────── */
+.paper-list,
+.section-header-list,
+#heatmap-drilldown {
+    display: none !important;
+}
