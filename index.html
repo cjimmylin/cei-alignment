@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEI Literature Vault — Dashboard v11</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"
+            onerror="document.getElementById('loading-splash').innerHTML='<div style=\'color:#ef4444;padding:40px;text-align:center;font-size:16px\'>Failed to load chart library. Please refresh the page.</div>'"></script>
+</head>
+<body>
+    <!-- Loading Splash -->
+    <div id="loading-splash" aria-live="polite" aria-label="Loading dashboard">
+        <div class="loading-title">CEI Literature Vault</div>
+        <div class="loading-sub">Loading 2,043 papers...</div>
+        <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+    </div>
+    <noscript>
+        <div style="padding:40px;text-align:center;color:#ef4444;font-size:16px;">
+            This dashboard requires JavaScript to function.
+        </div>
+    </noscript>
+
+    <!-- Skip Navigation -->
+    <a href="#tab-content-main" class="skip-link">Skip to main content</a>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1>CEI Literature Vault</h1>
+            <span class="version-badge">v11</span>
+        </div>
+        <div class="header-right">
+            <span id="kpi-total" class="kpi-inline">—</span> papers
+            <span class="sep">|</span>
+            <span id="kpi-date" class="kpi-date">—</span>
+            <span class="sep">|</span>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme" title="Toggle theme">&#9789;</button>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" id="tab-nav" role="tablist" aria-label="Dashboard sections">
+        <button class="tab-btn active" data-tab="overview" role="tab" id="tab-overview" aria-selected="true" aria-controls="pane-overview">Overview</button>
+        <button class="tab-btn" data-tab="explorer" role="tab" id="tab-explorer" aria-selected="false" aria-controls="pane-explorer">Paper Explorer</button>
+        <button class="tab-btn" data-tab="conference" role="tab" id="tab-conference" aria-selected="false" aria-controls="pane-conference">Conference &amp; Venue</button>
+        <button class="tab-btn" data-tab="taxonomy" role="tab" id="tab-taxonomy" aria-selected="false" aria-controls="pane-taxonomy">Taxonomy &amp; Methods</button>
+        <button class="tab-btn" data-tab="intersections" role="tab" id="tab-intersections" aria-selected="false" aria-controls="pane-intersections">Intersections</button>
+        <button class="tab-btn" data-tab="cultural" role="tab" id="tab-cultural" aria-selected="false" aria-controls="pane-cultural">Cultural Values</button>
+        <button class="tab-btn" data-tab="normative" role="tab" id="tab-normative" aria-selected="false" aria-controls="pane-normative">Normative Ethics</button>
+        <button class="tab-btn" data-tab="moralpsych" role="tab" id="tab-moralpsych" aria-selected="false" aria-controls="pane-moralpsych">Moral Psychology</button>
+        <button class="tab-btn" data-tab="religious" role="tab" id="tab-religious" aria-selected="false" aria-controls="pane-religious">Religious Values</button>
+        <button class="tab-btn" data-tab="models" role="tab" id="tab-models" aria-selected="false" aria-controls="pane-models">Models &amp; LLMs</button>
+        <button class="tab-btn" data-tab="authors" role="tab" id="tab-authors" aria-selected="false" aria-controls="pane-authors">Authors &amp; Collaboration</button>
+    </nav>
+
+    <!-- Quick Filter Presets -->
+    <div class="preset-bar" id="preset-bar" style="display:none">
+        <span class="preset-label">Quick:</span>
+        <button class="preset-btn" data-preset="benchmarks" title="Show benchmark papers only">Benchmarks</button>
+        <button class="preset-btn" data-preset="non-weird" title="Papers with non-WEIRD cultural focus">Non-WEIRD</button>
+        <button class="preset-btn" data-preset="religious" title="Papers engaging with religious ethics">Religious Ethics</button>
+        <button class="preset-btn" data-preset="cross-cultural" title="Papers with cultural/nationality data">Cross-Cultural</button>
+        <button class="preset-btn" data-preset="open-models" title="Papers testing open-source models">Open Models</button>
+    </div>
+
+    <!-- Filter Chip Bar -->
+    <div class="filter-bar" id="filter-bar" style="display:none;">
+        <div class="filter-chips" id="filter-chips"></div>
+        <div class="filter-actions">
+            <span id="filter-count" class="filter-count"></span>
+            <button class="btn-clear" id="btn-clear-filters">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <main class="tab-content" id="tab-content-main">
+
+        <!-- Tab 1: Overview (v10 — Narrative Digest + Dimension Cards) -->
+        <section class="tab-pane active" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview">
+
+            <!-- Narrative Digest -->
+            <div class="overview-digest">
+                <p class="digest-lead" id="digest-lead"></p>
+                <p class="digest-sub" id="digest-sub"></p>
+            </div>
+
+            <!-- KPI Strip (8 items) -->
+            <div class="kpi-row kpi-row-compact" id="kpi-row">
+                <div class="kpi-card"><div class="kpi-value" id="kpi-papers">—</div><div class="kpi-label">Papers</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-authors">—</div><div class="kpi-label">Authors</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-venues">—</div><div class="kpi-label">Venues</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-ethics">—</div><div class="kpi-label">Ethics Papers</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-candidates">—</div><div class="kpi-label">Benchmarks</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-llm">—</div><div class="kpi-label">LLM Assessed</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-traditions">—</div><div class="kpi-label">Traditions</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpi-cultures">—</div><div class="kpi-label">Cultures</div></div>
+            </div>
+
+            <!-- Core Charts -->
+            <div class="chart-grid-2">
+                <div class="chart-card"><h3>Papers by Year</h3><div class="chart-container" id="chart-timeline"></div></div>
+                <div class="chart-card"><h3>Venue Type Distribution</h3><div class="chart-container" id="chart-venue-donut"></div></div>
+            </div>
+
+            <!-- Analytical Dimensions -->
+            <h2 class="overview-section-heading">Analytical Dimensions</h2>
+            <p class="overview-section-sub">Each card previews one analytical axis of the corpus. Click to explore the full tab.</p>
+
+            <div class="dim-grid">
+                <div class="dim-card" data-tab-link="normative">
+                    <div class="dim-header"><span class="dim-icon">&#x2696;</span><span class="dim-title">Normative Ethics</span></div>
+                    <div class="dim-body" id="dim-body-normative"></div>
+                    <div class="dim-stats" id="dim-stats-normative"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Normative Ethics</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="moralpsych">
+                    <div class="dim-header"><span class="dim-icon">&#x1F9E0;</span><span class="dim-title">Moral Psychology</span></div>
+                    <div class="dim-body" id="dim-body-moralpsych"></div>
+                    <div class="dim-stats" id="dim-stats-moralpsych"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Moral Psychology</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="religious">
+                    <div class="dim-header"><span class="dim-icon">&#x1F54C;</span><span class="dim-title">Religious Values</span></div>
+                    <div class="dim-body" id="dim-body-religious"></div>
+                    <div class="dim-stats" id="dim-stats-religious"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Religious Values</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="cultural">
+                    <div class="dim-header"><span class="dim-icon">&#x1F30D;</span><span class="dim-title">Cultural Values</span></div>
+                    <div class="dim-body" id="dim-body-cultural"></div>
+                    <div class="dim-stats" id="dim-stats-cultural"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Cultural Values</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="models">
+                    <div class="dim-header"><span class="dim-icon">&#x1F916;</span><span class="dim-title">Models &amp; LLMs</span></div>
+                    <div class="dim-body" id="dim-body-models"></div>
+                    <div class="dim-stats" id="dim-stats-models"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Models &amp; LLMs</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="conference">
+                    <div class="dim-header"><span class="dim-icon">&#x1F3DB;</span><span class="dim-title">Conference &amp; Venue</span></div>
+                    <div class="dim-body" id="dim-body-conference"></div>
+                    <div class="dim-stats" id="dim-stats-conference"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Conferences &amp; Venues</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="taxonomy">
+                    <div class="dim-header"><span class="dim-icon">&#x1F4CA;</span><span class="dim-title">Benchmarks &amp; Taxonomy</span></div>
+                    <div class="dim-body" id="dim-body-taxonomy"></div>
+                    <div class="dim-stats" id="dim-stats-taxonomy"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Taxonomy &amp; Methods</span></div>
+                </div>
+                <div class="dim-card" data-tab-link="authors">
+                    <div class="dim-header"><span class="dim-icon">&#x1F465;</span><span class="dim-title">Authors &amp; Collaboration</span></div>
+                    <div class="dim-body" id="dim-body-authors"></div>
+                    <div class="dim-stats" id="dim-stats-authors"></div>
+                    <div class="dim-footer"><span class="dim-link">Explore Authors</span></div>
+                </div>
+            </div>
+
+            <!-- Secondary Charts -->
+            <div class="chart-grid-2">
+                <div class="chart-card"><h3>Top 10 Categories</h3><div class="chart-container" id="chart-category-bar"></div></div>
+                <div class="chart-card"><h3>Data Availability</h3><div class="chart-container" id="chart-availability"></div></div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Paper Explorer -->
+        <section class="tab-pane" id="pane-explorer" role="tabpanel" aria-labelledby="tab-explorer">
+            <div class="explorer-controls">
+                <input type="text" class="search-input" id="explorer-search" placeholder="Search papers by title, author, venue, abstract...">
+                <div class="msel" id="msel-category"></div>
+                <div class="msel" id="msel-year"></div>
+                <div class="msel" id="msel-venue-type"></div>
+                <div class="msel" id="msel-ethics"></div>
+                <div class="msel" id="msel-moral-psych"></div>
+                <div class="msel" id="msel-religion"></div>
+                <div class="msel" id="msel-model"></div>
+                <div class="msel" id="msel-flag"></div>
+                <div class="explorer-meta">
+                    <span id="explorer-count">0 papers</span>
+                    <select id="explorer-page-size">
+                        <option value="25">25 per page</option>
+                        <option value="50" selected>50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+            <div class="explorer-table-wrap">
+                <table class="explorer-table" id="explorer-table">
+                    <thead>
+                        <tr>
+                            <th class="col-year sortable" data-sort="y">Year <span class="sort-arrow"></span></th>
+                            <th class="col-paper sortable" data-sort="t">Paper <span class="sort-arrow"></span></th>
+                            <th class="col-venue sortable" data-sort="cc">Venue <span class="sort-arrow"></span></th>
+                            <th class="col-ethics sortable" data-sort="eo">Ethics <span class="sort-arrow"></span></th>
+                            <th class="col-moral-psych">Moral Psych</th>
+                            <th class="col-religion">Religion</th>
+                            <th class="col-models">Model</th>
+                            <th class="col-flags">Flags</th>
+                        </tr>
+                    </thead>
+                    <tbody id="explorer-tbody"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="explorer-pagination"></div>
+        </section>
+
+        <!-- Tab 3: Conference & Venue -->
+        <section class="tab-pane" id="pane-conference" role="tabpanel" aria-labelledby="tab-conference">
+            <div class="sub-nav" id="conf-sub-nav">
+                <button class="sub-btn active" data-sub="conf-overview">Overview</button>
+                <button class="sub-btn" data-sub="conf-families">Conference Families</button>
+                <button class="sub-btn" data-sub="conf-journals">Journals</button>
+                <button class="sub-btn" data-sub="conf-temporal">Temporal</button>
+            </div>
+            <div class="sub-pane active" id="sub-conf-overview">
+                <div class="narrative">
+                    <p><strong>Where</strong> research is published shapes how it is received: peer-reviewed conference and journal papers undergo expert scrutiny that preprints do not. This section maps the vault's 2,043 papers across their publication venues — from flagship NLP conferences (ACL, EMNLP, NeurIPS) to domain-specific workshops and open-access preprint servers. The venue distribution reveals both the field's institutional centre of gravity and its long tail: a handful of top-tier AI venues account for a disproportionate share of values-alignment work, while hundreds of smaller venues contribute one or two papers each.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-conf-venues">—</div><div class="kpi-label">Unique Venues</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-conf-conf">—</div><div class="kpi-label">Conference Papers</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-conf-peer">—</div><div class="kpi-label">Peer-Reviewed</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-conf-preprint">—</div><div class="kpi-label">Preprints</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Venue Type Distribution</h3><div class="chart-container" id="chart-conf-donut"></div></div>
+                    <div class="chart-card"><h3>Top 30 Venues</h3><div class="chart-container chart-tall" id="chart-conf-top30"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="conf-ov-list-header"><h3>Conference & Venue Papers</h3><span class="badge" id="conf-ov-list-count">0</span></div>
+                <div class="paper-list" id="conf-ov-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-conf-families">
+                <div class="narrative">
+                    <p><strong>Individual venue names fragment what are really conference families</strong> — ACL, NAACL, EACL, and AACL-IJCNLP all belong to the ACL ecosystem; NeurIPS, ICML, and ICLR form the ML core. This sub-tab groups venues into families and ecosystems, revealing which research communities drive the ethics conversation. The treemap shows relative mass, the ecosystem chart maps disciplinary homes, and the year heatmap tracks how each family's engagement has evolved.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Conference Family Treemap</h3><div class="chart-container chart-tall" id="chart-conf-treemap"></div></div>
+                    <div class="chart-card"><h3>Ecosystem Distribution</h3><div class="chart-container" id="chart-conf-ecosystem"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Conference Family x Year Heatmap</h3><div class="chart-container chart-tall" id="chart-conf-heatmap"></div></div>
+                </div>
+                <!-- Heatmap drill-down paper list -->
+                <div id="heatmap-drilldown" style="display:none;">
+                    <div class="drilldown-header">
+                        <h3 id="heatmap-drilldown-title">—</h3>
+                        <button class="btn-clear" id="heatmap-drilldown-close">Dismiss</button>
+                    </div>
+                    <div class="explorer-table-wrap">
+                        <table class="explorer-table" id="heatmap-drilldown-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-year">Year</th>
+                                    <th class="col-paper">Paper</th>
+                                    <th class="col-venue">Venue</th>
+                                    <th class="col-ethics">Ethics</th>
+                                    <th class="col-moral-psych">Moral Psych</th>
+                                    <th class="col-religion">Religion</th>
+                                    <th class="col-models">Model</th>
+                                    <th class="col-flags">Flags</th>
+                                </tr>
+                            </thead>
+                            <tbody id="heatmap-drilldown-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="section-header section-header-list" id="conf-fam-list-header"><h3>Conference Family Papers</h3><span class="badge" id="conf-fam-list-count">0</span></div>
+                <div class="paper-list" id="conf-fam-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-conf-journals">
+                <div class="narrative">
+                    <p><strong>Journal publications complement the conference-driven pace of AI research</strong> with longer review cycles and broader disciplinary reach. Many ethics and social-science perspectives enter the AI values conversation through journals rather than conference proceedings. The chart below ranks the 20 most-represented journals in the vault, spanning AI-specific outlets, interdisciplinary ethics journals, and domain venues in law, philosophy, and public policy.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Top 20 Journals</h3><div class="chart-container chart-tall" id="chart-conf-journals"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="conf-jour-list-header"><h3>Journal Papers</h3><span class="badge" id="conf-jour-list-count">0</span></div>
+                <div class="paper-list" id="conf-jour-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-conf-temporal">
+                <div class="narrative">
+                    <p><strong>Publication patterns shift over time</strong> as new venues emerge and the balance between peer-reviewed and preprint outlets evolves. The timeline below tracks how venue types — conferences, journals, workshops, and preprints — have contributed to the vault year by year. The peer-review ratio chart reveals whether the field's rapid growth has maintained its proportion of expert-scrutinised work or increasingly relied on unreviewed preprints.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Venue Type Timeline</h3><div class="chart-container" id="chart-conf-timeline"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Peer-Review Ratio Over Time</h3><div class="chart-container" id="chart-conf-peer-ratio"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="conf-temp-list-header"><h3>Publication Papers</h3><span class="badge" id="conf-temp-list-count">0</span></div>
+                <div class="paper-list" id="conf-temp-papers"></div>
+            </div>
+        </section>
+
+        <!-- Tab 4: Taxonomy & Methods -->
+        <section class="tab-pane" id="pane-taxonomy" role="tabpanel" aria-labelledby="tab-taxonomy">
+            <div class="sub-nav" id="tax-sub-nav">
+                <button class="sub-btn active" data-sub="tax-overview">Overview</button>
+                <button class="sub-btn" data-sub="tax-benchmarks">Benchmarks</button>
+            </div>
+            <div class="sub-pane active" id="sub-tax-overview">
+                <div class="narrative">
+                    <p><strong>Every paper in the vault carries a multi-label classification</strong> spanning ethics focus, research methodology, data nature, and topical domain — assigned through a seven-stage keyword-and-heuristic pipeline. This overview visualises how those categories distribute over time and interact with each other. The year heatmap reveals when particular sub-fields gained traction, the co-occurrence matrix shows which topics are studied together (and which remain siloed), and the model-family chart highlights which AI systems attract the most taxonomic scrutiny.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Category x Year Heatmap</h3><div class="chart-container chart-tall" id="chart-tax-heatmap"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Category Co-occurrence</h3><div class="chart-container chart-tall" id="chart-tax-cooccurrence"></div></div>
+                    <div class="chart-card"><h3>Top Model Families</h3><div class="chart-container chart-tall" id="chart-tax-models"></div></div>
+                </div>
+            </div>
+            <div class="sub-pane" id="sub-tax-benchmarks">
+                <div class="narrative">
+                    <p>The vault contains <strong id="bench-total">—</strong> benchmark candidates identified through deep-read survey. This sub-tab analyzes benchmark coverage across ethical traditions, cultures, and languages — revealing where the evaluation ecosystem is robust and where critical gaps persist.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-bench-total">—</div><div class="kpi-label">Benchmark Candidates</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-bench-ethics">—</div><div class="kpi-label">Ethics Benchmarks</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-bench-cultural">—</div><div class="kpi-label">Cultural Benchmarks</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-bench-religious">—</div><div class="kpi-label">Religious Benchmarks</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Benchmark x Tradition</h3><div class="chart-container chart-tall" id="chart-bench-tradition"></div></div>
+                    <div class="chart-card"><h3>Benchmark Language Coverage</h3><div class="chart-container chart-tall" id="chart-bench-lang"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Benchmark Timeline</h3><div class="chart-container" id="chart-bench-timeline"></div></div>
+                    <div class="chart-card"><h3>Benchmark Venue Types</h3><div class="chart-container" id="chart-bench-venue"></div></div>
+                </div>
+                <div class="section-header"><h3>Benchmark Candidates</h3><span class="badge" id="bench-list-count">0</span></div>
+                <div class="paper-list" id="bench-papers"></div>
+            </div>
+        </section>
+
+        <!-- Tab 5: Intersections (Cross-Dimensional) -->
+        <section class="tab-pane" id="pane-intersections" role="tabpanel" aria-labelledby="tab-intersections">
+            <div class="narrative">
+                <p><strong>Cross-dimensional analysis</strong> reveals the intersections that isolated tabs cannot show. The most important questions in values alignment are inherently cross-dimensional: Which models have been tested on non-WEIRD populations? Do papers using MFT also engage with religious traditions? Which conferences publish cross-cultural work? These heatmaps expose exactly where the research space is dense and where it is empty.</p>
+            </div>
+            <div class="chart-grid-2">
+                <div class="chart-card"><h3>Model x Ethical Framework</h3><div class="chart-container chart-tall" id="chart-ix-model-ethics"></div></div>
+                <div class="chart-card"><h3>Model x Culture/Region</h3><div class="chart-container chart-tall" id="chart-ix-model-culture"></div></div>
+            </div>
+            <div class="chart-grid-2">
+                <div class="chart-card"><h3>Venue x Dimension</h3><div class="chart-container chart-tall" id="chart-ix-venue-dim"></div></div>
+                <div class="chart-card"><h3>Framework x Religion</h3><div class="chart-container chart-tall" id="chart-ix-fw-religion"></div></div>
+            </div>
+            <!-- Drilldown area for intersection clicks -->
+            <div id="ix-drilldown" style="display:none;">
+                <div class="drilldown-header">
+                    <h3 id="ix-drilldown-title">—</h3>
+                    <button class="btn-clear" id="ix-drilldown-close">Dismiss</button>
+                </div>
+                <div class="paper-list" id="ix-drilldown-papers"></div>
+            </div>
+        </section>
+
+        <!-- Tab 5: Cultural Values -->
+        <section class="tab-pane" id="pane-cultural" role="tabpanel" aria-labelledby="tab-cultural">
+            <div class="sub-nav" id="cult-sub-nav">
+                <button class="sub-btn active" data-sub="cult-regions">Regions</button>
+                <button class="sub-btn" data-sub="cult-countries">Countries</button>
+                <button class="sub-btn" data-sub="cult-languages">Languages</button>
+                <button class="sub-btn" data-sub="cult-weird">WEIRD Analysis</button>
+                <button class="sub-btn" data-sub="cult-treemap">Treemap</button>
+            </div>
+            <div class="sub-pane active" id="sub-cult-regions">
+                <div class="narrative">
+                    <p>This section maps the cultural landscape of LLM ethics research across the vault's <strong>2,043 papers</strong>. Cultural values alignment is critical because ethical norms vary profoundly across societies — what is considered fair, respectful, or virtuous in one cultural context may be perceived very differently in another. Most current LLM benchmarks reflect <em>WEIRD</em> (Western, Educated, Industrialized, Rich, Democratic) value systems, creating systematic blind spots for the majority of the world's population.</p>
+                    <p>Data is drawn from two sources: <strong>paper-level YAML classifications</strong> (national/ethnic/cultural tags on all 2,043 papers) and the <strong>989-candidate benchmark survey</strong> (language, tradition, and framework extraction via NLP).</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Region Distribution</h3><div class="chart-container" id="chart-cult-region-donut"></div></div>
+                    <div class="chart-card"><h3>Region Timeline</h3><div class="chart-container" id="chart-cult-region-timeline"></div></div>
+                </div>
+            </div>
+            <div class="sub-pane" id="sub-cult-countries">
+                <div class="narrative">
+                    <p><strong>Country and nationality tags reveal which societies' values the AI ethics literature actually examines.</strong> The bar chart below ranks the 30 most-studied cultures and nationalities. While the Regions sub-tab aggregates by continent, this view preserves the granularity needed to spot imbalances — for example, whether "East Asian" coverage is driven primarily by Chinese or Japanese studies, or whether African representation is concentrated in a single country.</p>
+                </div>
+                <div class="section-header"><h3>Culture/Nationality Papers</h3><span class="badge" id="cult-country-count">0</span></div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Top 30 Cultures/Nationalities</h3><div class="chart-container chart-tall" id="chart-cult-country-bar"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Culture Focus Shift (2016–2026)</h3><div class="chart-container" id="chart-cult-country-timeline"></div></div>
+                    <div class="chart-card"><h3>Culture Co-Occurrence Matrix</h3><div class="chart-container chart-tall" id="chart-cult-country-cooccur"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Ethical Framework × Culture</h3><div class="chart-container chart-tall" id="chart-cult-country-framework"></div></div>
+                    <div class="chart-card"><h3>Benchmark Gap by Culture</h3><div class="chart-container" id="chart-cult-country-bench"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Venue Type × Culture</h3><div class="chart-container chart-tall" id="chart-cult-country-venue"></div></div>
+                </div>
+                <div class="paper-list" id="cult-country-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-cult-languages">
+                <div class="narrative">
+                    <p><strong>Language is both a proxy for cultural reach and a practical barrier to evaluation.</strong> A benchmark available only in English cannot test whether an LLM's moral reasoning holds in Mandarin, Arabic, or Yoruba. This sub-tab charts the languages explicitly studied or used in the vault's papers — revealing how far the field has moved beyond English-only evaluation and where monolingual blind spots persist.</p>
+                </div>
+                <div class="section-header"><h3>Language Papers</h3><span class="badge" id="cult-lang-count">0</span></div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Top 20 Languages</h3><div class="chart-container chart-tall" id="chart-cult-lang-bar"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Language Family Treemap</h3><div class="chart-container chart-tall" id="chart-cult-lang-family"></div></div>
+                    <div class="chart-card"><h3>Language Coverage Timeline (2016–2026)</h3><div class="chart-container" id="chart-cult-lang-timeline"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Language Benchmark Gap</h3><div class="chart-container" id="chart-cult-lang-bench"></div></div>
+                    <div class="chart-card"><h3>Language–Culture Alignment by Region</h3><div class="chart-container" id="chart-cult-lang-radar"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Venue Type × Language</h3><div class="chart-container chart-tall" id="chart-cult-lang-venue"></div></div>
+                </div>
+                <div class="paper-list" id="cult-lang-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-cult-weird">
+                <div class="narrative">
+                    <p><strong>The WEIRD framework</strong> (Western, Educated, Industrialized, Rich, Democratic) identifies a sampling bias that pervades psychology and, by extension, AI alignment research. Papers focused on populations outside WEIRD societies often uncover value structures that mainstream benchmarks miss entirely. This chart classifies every culturally-tagged paper in the vault as WEIRD or non-WEIRD, quantifying the extent of that imbalance.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>WEIRD vs Non-WEIRD</h3><div class="chart-container" id="chart-cult-weird-pie"></div></div>
+                    <div class="chart-card info-card" id="cult-weird-info">
+                        <h3>WEIRD Analysis</h3>
+                        <p>WEIRD = Western, Educated, Industrialized, Rich, Democratic societies. Most AI ethics research focuses on WEIRD populations.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sub-pane" id="sub-cult-treemap">
+                <div class="narrative">
+                    <p><strong>The treemap provides a hierarchical view</strong> of the vault's cultural coverage, nesting individual countries and nationalities within their parent regions. Rectangle size encodes paper count, making it immediately visible where research mass concentrates and which regions contain only a thin scattering of studies. Click or hover to drill into any region's constituent cultures.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Region → Culture Treemap</h3><div class="chart-container chart-tall" id="chart-cult-treemap"></div></div>
+                </div>
+            </div>
+            <!-- Always-visible: Cultural Best Practices & Gap Analysis -->
+            <div class="tab-bottom-section">
+                <div class="narrative">
+                    <p>Gap analysis reveals where the LLM ethics evaluation ecosystem falls short. Despite growing interest in cross-cultural AI assessment, significant blind spots persist. The following frameworks and best practices can guide future benchmark development.</p>
+                </div>
+                <h3 class="narrative-heading">Best Practices for Cultural Values Alignment</h3>
+                <div class="bp-grid">
+                    <div class="bp-card">
+                        <h4>Beyond WEIRD-Centric Evaluation</h4>
+                        <p>Current benchmarks over-represent Western moral intuitions. Evaluation suites must actively include non-Western ethical frameworks as first-class perspectives, not afterthoughts.</p>
+                    </div>
+                    <div class="bp-card">
+                        <h4>Culturally-Situated Evaluation</h4>
+                        <p>Translation alone does not equal cultural adaptation. Benchmarks must be designed with local cultural experts who understand the nuances of moral reasoning in their communities.</p>
+                    </div>
+                    <div class="bp-card">
+                        <h4>Multilingual ≠ Multicultural</h4>
+                        <p>A benchmark translated into 20 languages but designed with Western moral assumptions still measures Western values in other languages. True multicultural evaluation requires culturally-native scenario design.</p>
+                    </div>
+                    <div class="bp-card">
+                        <h4>Engage Local Communities</h4>
+                        <p>Meaningful cultural values alignment requires participatory design with affected communities, not top-down application of pre-existing frameworks.</p>
+                    </div>
+                </div>
+                <h3 class="narrative-heading">What's Missing: Underrepresented Traditions</h3>
+                <div class="gap-grid">
+                    <div class="gap-card critical">
+                        <h4>Ubuntu Ethics</h4>
+                        <div class="gap-region">Sub-Saharan Africa</div>
+                        <span class="gap-status critical">Critical Gap</span>
+                        <p>Ubuntu philosophy emphasizes communal harmony and interconnectedness. Despite rich philosophical tradition, virtually no standardized LLM benchmarks exist.</p>
+                    </div>
+                    <div class="gap-card critical">
+                        <h4>Buddhist Ethics</h4>
+                        <div class="gap-region">East/Southeast Asia</div>
+                        <span class="gap-status critical">Critical Gap</span>
+                        <p>Buddhist moral reasoning (ahimsa, karma, middle path) influences billions but has near-zero representation in LLM evaluation literature.</p>
+                    </div>
+                    <div class="gap-card critical">
+                        <h4>Hindu Ethics</h4>
+                        <div class="gap-region">South Asia</div>
+                        <span class="gap-status critical">Critical Gap</span>
+                        <p>Dharmic traditions cover complex moral philosophy (dharma, karma, ahimsa) for 1.2B+ people — essentially absent from benchmarks.</p>
+                    </div>
+                    <div class="gap-card critical">
+                        <h4>Indigenous Ethics</h4>
+                        <div class="gap-region">Global</div>
+                        <span class="gap-status critical">Critical Gap</span>
+                        <p>First Nations, Aboriginal, and Indigenous ethical frameworks emphasize land, kinship, and reciprocity — completely absent from LLM evaluation.</p>
+                    </div>
+                    <div class="gap-card severe">
+                        <h4>Latin American Ethics</h4>
+                        <div class="gap-region">Latin America</div>
+                        <span class="gap-status severe">Severe Gap</span>
+                        <p>Liberation theology, buen vivir, and Latin American moral philosophy remain underexplored in AI ethics benchmarking.</p>
+                    </div>
+                    <div class="gap-card severe">
+                        <h4>Southeast Asian Ethics</h4>
+                        <div class="gap-region">Southeast Asia</div>
+                        <span class="gap-status severe">Severe Gap</span>
+                        <p>Diverse moral traditions across ASEAN nations (Filipino bayanihan, Thai Buddhist ethics, Indonesian pancasila) lack dedicated benchmarks.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 6: Normative Ethics -->
+        <section class="tab-pane" id="pane-normative" role="tabpanel" aria-labelledby="tab-normative">
+            <div class="sub-nav" id="norm-sub-nav">
+                <button class="sub-btn active" data-sub="norm-overview">Overview</button>
+                <button class="sub-btn" data-sub="norm-ve">Virtue Ethics</button>
+                <button class="sub-btn" data-sub="norm-de">Deontological</button>
+                <button class="sub-btn" data-sub="norm-cu">Consequentialism</button>
+                <button class="sub-btn" data-sub="norm-ce">Care Ethics</button>
+                <button class="sub-btn" data-sub="norm-co">Contractualism</button>
+                <button class="sub-btn" data-sub="norm-princ">Principlism</button>
+                <button class="sub-btn" data-sub="norm-overlap">Overlaps</button>
+                <button class="sub-btn" data-sub="norm-bridge">Norm × Psych</button>
+            </div>
+            <div class="sub-pane active" id="sub-norm-overview">
+                <div class="narrative">
+                    <p>Normative ethics prescribes what <em>ought</em> to be — unlike descriptive approaches such as Moral Foundations Theory that catalogue how people actually reason. For LLM assessment, normative benchmarks test whether models can reason consistently within established ethical frameworks: applying virtues, following duties, or maximizing welfare. This section maps the vault's coverage across the three major normative traditions.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Classification Distribution</h3><div class="chart-container" id="chart-norm-class-donut"></div></div>
+                    <div class="chart-card"><h3>Framework Distribution</h3><div class="chart-container" id="chart-norm-fw-bar"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Framework Timeline</h3><div class="chart-container" id="chart-norm-timeline"></div></div>
+                </div>
+                <!-- Item 5: Coverage Gap Matrix -->
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Framework Coverage Gap Matrix</h3><div class="gap-matrix-legend"><span>● Covered</span><span>○ Gap</span></div><div class="chart-container chart-tall" id="chart-norm-gap-matrix"></div></div>
+                </div>
+                <!-- Tier 3: Meta-Ethics, Author-Framework, Citations -->
+                <h3 class="narrative-heading">Tier 3: Advanced Analytics</h3>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Meta-Ethics Concepts</h3><div class="chart-container chart-sm" id="chart-norm-meta-ethics"></div></div>
+                    <div class="chart-card"><h3>Philosopher Citations</h3><div class="chart-container chart-sm" id="chart-norm-citations"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Author × Framework</h3><div class="chart-container chart-tall" id="chart-norm-author-fw"></div></div>
+                    <div class="chart-card"><h3>Full-Text Keyword Density</h3><div class="chart-container chart-tall" id="chart-norm-fulltext-depth"></div></div>
+                </div>
+            </div>
+            <div class="sub-pane" id="sub-norm-ve">
+                <div class="section-header"><h3>Virtue Ethics Papers</h3><span class="badge" id="norm-ve-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-ve">
+                    <p><strong>Virtue Ethics</strong> (Aristotle, Confucius) evaluates moral character rather than actions or outcomes. It asks whether an agent — including an LLM — exhibits or simulates virtues such as honesty, prudence, justice, and temperance. As LLMs increasingly serve as conversational agents, tutors, and advisors, VE benchmarks test whether their responses embody the <em>phronesis</em> (practical wisdom) and <em>eudaimonia</em> (human flourishing) that character-based ethics demands.</p>
+                    <p>Key benchmarks include JETHICS (78K Japanese scenarios with a dedicated VE category), BehaviorBench (testing alignment via the ETHICS dataset's VE subset), and CharacterEval / CharMoral for measuring character-level moral reasoning. Agarwal et al. (2024) uniquely operationalise VE across six languages, while Ohlhorst (2025) proposes a virtue framework specifically for AI.</p>
+                    <p><strong>Gaps:</strong> VE benchmarks remain the least developed of the three traditions. Most VE papers are theoretical rather than empirical. Confucian VE and eudaimonic well-being evaluations remain nascent paradigms with virtually no standardised test sets.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-ve-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-norm-ve-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-norm-ve-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-norm-ve-venue"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-norm-ve-regions"></div></div>
+                    <div class="chart-card"><h3>Virtues Studied</h3><div class="chart-container chart-sm" id="chart-norm-ve-virtues"></div></div>
+                </div>
+                <!-- Items 1, 2, 7, 8: Per-framework enrichments -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Engagement Depth</h3><div class="chart-container chart-sm" id="chart-norm-ve-depth"></div></div>
+                    <div class="chart-card"><h3>Keyword Co-occurrence</h3><div class="chart-container chart-sm" id="chart-norm-ve-cooc"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Sub-Traditions</h3><div class="chart-container chart-sm" id="chart-norm-ve-subtrad"></div></div>
+                    <div class="chart-card"><h3>Concept Evolution</h3><div class="chart-container chart-sm" id="chart-norm-ve-concept-timeline"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-ve-list-header"><h3>Virtue Ethics Papers</h3><span class="badge" id="norm-ve-list-count">0</span></div>
+                <div class="paper-list" id="norm-ve-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-de">
+                <div class="section-header"><h3>Deontological Ethics Papers</h3><span class="badge" id="norm-de-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-de">
+                    <p><strong>Deontological Ethics</strong> (Kant) judges actions by whether they conform to rules, duties, and the categorical imperative — 'act only according to that maxim you could will as a universal law.' For LLMs, deontological benchmarks test whether models can identify duties, respect rights, reason about obligations, and distinguish permissible from impermissible actions independent of consequences.</p>
+                    <p>Key benchmarks: Samway et al. (2025) present 600+ trolley-problem variants and find that chain-of-thought prompting skews models toward deontological answers; Lu et al. (2025) introduce a Kantian &#x3BA; parameter for calibrating LLM moral reasoning; the ETHICS dataset (Hendrycks 2021) includes a dedicated deontology subset; and JETHICS covers Japanese deontological norms.</p>
+                    <p><strong>Gaps:</strong> Current benchmarks focus on simple rule-following. Tests for perfect vs. imperfect duties, Ross's prima facie duties, and multi-stakeholder rights conflicts remain largely absent from the benchmark literature.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-de-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-norm-de-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-norm-de-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-norm-de-venue"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-norm-de-regions"></div></div>
+                    <div class="chart-card"><h3>Deontological Concepts</h3><div class="chart-container chart-sm" id="chart-norm-de-concepts"></div></div>
+                </div>
+                <!-- Items 1, 2, 7, 8: Per-framework enrichments -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Engagement Depth</h3><div class="chart-container chart-sm" id="chart-norm-de-depth"></div></div>
+                    <div class="chart-card"><h3>Keyword Co-occurrence</h3><div class="chart-container chart-sm" id="chart-norm-de-cooc"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Sub-Traditions</h3><div class="chart-container chart-sm" id="chart-norm-de-subtrad"></div></div>
+                    <div class="chart-card"><h3>Concept Evolution</h3><div class="chart-container chart-sm" id="chart-norm-de-concept-timeline"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-de-list-header"><h3>Deontological Ethics Papers</h3><span class="badge" id="norm-de-list-count">0</span></div>
+                <div class="paper-list" id="norm-de-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-cu">
+                <div class="section-header"><h3>Consequentialism/Utilitarianism Papers</h3><span class="badge" id="norm-cu-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-cu">
+                    <p><strong>Consequentialism / Utilitarianism</strong> (Bentham, Mill) judges actions solely by their outcomes — 'the greatest good for the greatest number.' For LLMs, consequentialist benchmarks test trade-off reasoning, welfare aggregation, and whether models can compute or approximate utility functions under uncertainty.</p>
+                    <p>Key benchmarks: the Greatest Good Benchmark (Marraffini 2024) directly tests utilitarian reasoning; Moore et al. (2024) compare Utilitarian Sum vs. Nash Product welfare functions; Keshmirian et al. (2025) show multi-agent deliberation boosts utilitarian alignment. Moral Machine derivatives test utilitarian trade-offs in autonomous driving scenarios.</p>
+                    <p><strong>Gaps:</strong> Most tests probe simple utility calculus (trolley-like dilemmas). Rule utilitarianism, preference utilitarianism, and satisficing consequentialism remain essentially untested in the LLM evaluation literature.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-cu-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-norm-cu-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-norm-cu-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-norm-cu-venue"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-norm-cu-regions"></div></div>
+                    <div class="chart-card"><h3>CU Concepts Studied</h3><div class="chart-container chart-sm" id="chart-norm-cu-concepts"></div></div>
+                </div>
+                <!-- Items 1, 2, 7, 8: Per-framework enrichments -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Engagement Depth</h3><div class="chart-container chart-sm" id="chart-norm-cu-depth"></div></div>
+                    <div class="chart-card"><h3>Keyword Co-occurrence</h3><div class="chart-container chart-sm" id="chart-norm-cu-cooc"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Sub-Traditions</h3><div class="chart-container chart-sm" id="chart-norm-cu-subtrad"></div></div>
+                    <div class="chart-card"><h3>Concept Evolution</h3><div class="chart-container chart-sm" id="chart-norm-cu-concept-timeline"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-cu-list-header"><h3>Consequentialism/Utilitarianism Papers</h3><span class="badge" id="norm-cu-list-count">0</span></div>
+                <div class="paper-list" id="norm-cu-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-ce">
+                <div class="section-header"><h3>Care Ethics Papers</h3><span class="badge" id="norm-ce-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-care">
+                    <p><strong>Care Ethics</strong> (Gilligan, Noddings, Held) centres morality on relationships, empathy, and responsiveness to others' needs — in contrast to impartial, rule-based frameworks. For LLMs, care-ethics benchmarks test whether models can recognise relational context, respond with appropriate empathy, and navigate care-giving dilemmas where abstract principles fall short.</p>
+                    <p><strong>Gaps:</strong> Care ethics remains under-represented in LLM evaluation. Most work focuses on empathy detection rather than testing care-based moral reasoning as a distinct normative framework.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-ce-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-norm-ce-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-norm-ce-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-norm-ce-venue"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-norm-ce-regions"></div></div>
+                    <div class="chart-card"><h3>CE Concepts Studied</h3><div class="chart-container chart-sm" id="chart-norm-ce-concepts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Engagement Depth</h3><div class="chart-container chart-sm" id="chart-norm-ce-depth"></div></div>
+                    <div class="chart-card"><h3>Keyword Co-occurrence</h3><div class="chart-container chart-sm" id="chart-norm-ce-cooc"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-ce-list-header"><h3>Care Ethics Papers</h3><span class="badge" id="norm-ce-list-count">0</span></div>
+                <div class="paper-list" id="norm-ce-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-co">
+                <div class="section-header"><h3>Contractualism Papers</h3><span class="badge" id="norm-co-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-contract">
+                    <p><strong>Contractualism / Rawlsian Ethics</strong> (Rawls, Scanlon) grounds morality in principles that rational agents would agree to under fair conditions. The 'veil of ignorance' thought experiment and Scanlon's 'what we owe to each other' test whether decisions can be justified to all affected parties. For LLMs, contractualist benchmarks probe fairness reasoning, distributive justice, and whether models can simulate impartial deliberation.</p>
+                    <p><strong>Gaps:</strong> Most contractualist LLM work focuses on fairness metrics rather than testing Rawlsian reasoning directly. Scanlon-style justifiability tests and difference-principle evaluations are nascent.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-co-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-norm-co-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-norm-co-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-norm-co-venue"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-norm-co-regions"></div></div>
+                    <div class="chart-card"><h3>CO Concepts Studied</h3><div class="chart-container chart-sm" id="chart-norm-co-concepts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Engagement Depth</h3><div class="chart-container chart-sm" id="chart-norm-co-depth"></div></div>
+                    <div class="chart-card"><h3>Keyword Co-occurrence</h3><div class="chart-container chart-sm" id="chart-norm-co-cooc"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-co-list-header"><h3>Contractualism Papers</h3><span class="badge" id="norm-co-list-count">0</span></div>
+                <div class="paper-list" id="norm-co-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-princ">
+                <div class="section-header"><h3>Principlism Papers</h3><span class="badge" id="norm-princ-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-princ">
+                    <p><strong>Principlism</strong> (Beauchamp & Childress) organises bioethics around four principles — autonomy, beneficence, non-maleficence, and justice. Originally developed for medical ethics, it increasingly appears in AI ethics discussions around healthcare AI, clinical decision support, and patient-facing LLMs.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-norm-princ-year"></div></div>
+                    <div class="chart-card"><h3>Principlism Concepts</h3><div class="chart-container chart-sm" id="chart-norm-princ-concepts"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="norm-princ-list-header"><h3>Principlism Papers</h3><span class="badge" id="norm-princ-list-count">0</span></div>
+                <div class="paper-list" id="norm-princ-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-overlap">
+                <div class="narrative">
+                    <p><strong>Most real-world ethical dilemmas do not fit neatly into a single tradition.</strong> Papers tagged with more than one normative framework — virtue ethics, deontological, or consequentialist — reveal where the literature engages in genuinely pluralistic moral reasoning. This sub-tab maps those overlaps: which framework combinations appear most often, how multi-framework scholarship has grown over time, whether certain models or geographic regions attract more cross-tradition analysis, and how benchmark density compares across single- versus multi-framework papers.</p>
+                </div>
+                <!-- Row 1: Overlap bar (existing) + Benchmark density KPIs -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Framework Overlap</h3><div class="chart-container" id="chart-norm-overlap"></div></div>
+                    <div class="chart-card"><h3>Benchmark Density by Combination</h3><div class="chart-container" id="chart-norm-overlap-bench"></div></div>
+                </div>
+                <!-- Item 3: Comparative Radar + Item 9: Typology -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Comparative Radar</h3><div class="chart-container" id="chart-norm-comparative-radar"></div></div>
+                    <div class="chart-card"><h3>Overlap Typology</h3><div class="chart-container" id="chart-norm-overlap-typology"></div></div>
+                </div>
+                <!-- Row 2: Overlap timeline + Exclusivity sunburst -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Overlap Growth Over Time</h3><div class="chart-container" id="chart-norm-overlap-timeline"></div></div>
+                    <div class="chart-card"><h3>Framework Exclusivity</h3><div class="chart-container" id="chart-norm-overlap-excl"></div></div>
+                </div>
+                <!-- Row 3: Model comparison + Region heatmap -->
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top Models in Overlapping Papers</h3><div class="chart-container" id="chart-norm-overlap-models"></div></div>
+                    <div class="chart-card"><h3>Framework Combination × Region</h3><div class="chart-container chart-tall" id="chart-norm-overlap-region"></div></div>
+                </div>
+                <!-- Row 4: Paper list -->
+                <div class="section-header">
+                    <h3>Overlapping Papers</h3>
+                    <span class="badge" id="norm-overlap-count"></span>
+                </div>
+                <div class="paper-list" id="norm-overlap-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-norm-bridge">
+                <div class="narrative">
+                    <p><strong>Normative × Descriptive Bridge:</strong> This intersection reveals which papers engage with both prescriptive ethical frameworks (VE/DE/CU) and descriptive psychological theories (MFT, Schwartz, etc.). Papers at this intersection are uniquely positioned to test whether LLMs can distinguish between how people <em>do</em> reason morally and how they <em>ought</em> to.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-norm-bridge-count">—</div><div class="kpi-label">Bridge Papers</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Normative × Moral Psych Heatmap</h3><div class="chart-container" id="chart-norm-bridge-heatmap"></div></div>
+                    <div class="chart-card"><h3>Bridge Papers Over Time</h3><div class="chart-container chart-sm" id="chart-norm-bridge-timeline"></div></div>
+                </div>
+                <div class="section-header"><h3>Bridge Papers</h3><span class="badge" id="norm-bridge-list-count">0</span></div>
+                <div class="paper-list" id="norm-bridge-papers"></div>
+            </div>
+        </section>
+
+        <!-- Tab 7: Moral Psychology -->
+        <section class="tab-pane" id="pane-moralpsych" role="tabpanel" aria-labelledby="tab-moralpsych">
+            <div class="sub-nav" id="mp-sub-nav">
+                <button class="sub-btn active" data-sub="mp-overview">Overview</button>
+                <button class="sub-btn" data-sub="mp-values">Value Frameworks</button>
+                <button class="sub-btn" data-sub="mp-reasoning">Moral Reasoning</button>
+                <button class="sub-btn" data-sub="mp-dilemmas">Moral Dilemmas</button>
+                <button class="sub-btn" data-sub="mp-crossfw">Cross-Framework</button>
+            </div>
+            <!-- Sub-pane 1: Overview -->
+            <div class="sub-pane active" id="sub-mp-overview">
+                <div class="narrative">
+                    <p><strong>Moral psychology</strong> studies <em>how</em> people actually reason about morality — empirical and descriptive, not prescriptive. This is fundamentally different from normative ethics (deontology, utilitarianism, virtue ethics), which asks what <em>ought</em> to be. For LLM alignment, moral psychology frameworks reveal whether models replicate human moral intuitions, developmental stages, and value priorities — or diverge in systematic ways.</p>
+                    <p>Key frameworks include <strong>Moral Foundations Theory</strong> (Haidt/Graham: 6 innate moral foundations), <strong>Schwartz Basic Human Values</strong> (10 universal values in 4 higher-order groups), <strong>Kohlberg's Cognitive Developmental</strong> stages, the <strong>Trolley/Moral Machine</strong> paradigm, and <strong>Dual Process Theory</strong> (Greene: automatic vs. controlled moral reasoning). This section maps which theories the vault's literature actually engages with.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-total">—</div><div class="kpi-label">Moral Psych Papers</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-pct">—</div><div class="kpi-label">% of Vault</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-bench">—</div><div class="kpi-label">Benchmark Papers</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-llm">—</div><div class="kpi-label">LLM-Studied</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-theories">—</div><div class="kpi-label">Active Theories</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="mp-kpi-weird">—</div><div class="kpi-label">WEIRD Coverage</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Theory Distribution</h3><div class="chart-container" id="chart-mp-theory-bar"></div></div>
+                    <div class="chart-card"><h3>Theory Timeline</h3><div class="chart-container" id="chart-mp-timeline"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Theory Dominance Shift (%)</h3><div class="chart-container" id="chart-mp-dominance"></div></div>
+                    <div class="chart-card"><h3>WEIRD vs Non-WEIRD by Theory</h3><div class="chart-container" id="chart-mp-weird-split"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Theory Co-occurrence</h3><div class="chart-container chart-tall" id="chart-mp-cooccurrence"></div></div>
+                </div>
+            </div>
+            <!-- Sub-pane 2: Value Frameworks (MFT + Schwartz) -->
+            <div class="sub-pane" id="sub-mp-values">
+                <!-- MFT Section -->
+                <div class="section-header"><h3>Moral Foundations Theory</h3><span class="badge" id="mp-mft-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-mft">
+                    <p><strong>Moral Foundations Theory</strong> (Haidt &amp; Graham, 2007) represented a paradigm shift in moral psychology, challenging decades of rationalist models by arguing that moral judgment is primarily driven by rapid intuitive responses rather than deliberative reasoning. MFT identifies six innate psychological foundations: <em>Care/Harm</em>, <em>Fairness/Cheating</em>, <em>Loyalty/Betrayal</em>, <em>Authority/Subversion</em>, <em>Sanctity/Degradation</em>, and <em>Liberty/Oppression</em>. Crucially, these foundations are not equally weighted across cultures. Research consistently shows that WEIRD (Western, Educated, Industrialized, Rich, Democratic) populations disproportionately emphasize Care and Fairness, while non-WEIRD populations and politically conservative groups draw more evenly on all six foundations. This cross-cultural variability is precisely what makes MFT indispensable for alignment research.</p>
+                    <p>For values alignment, MFT offers something rare: a psychometrically validated instrument &mdash; the <strong>Moral Foundations Questionnaire</strong> (MFQ) &mdash; with large-scale cross-cultural norming data. When researchers administer the MFQ to an LLM, they can directly compare the model's moral foundation profile against human population baselines. The central questions are whether LLMs exhibit stable and coherent foundation profiles, whether those profiles shift under different prompting conditions or persona instructions, and whether models trained predominantly on English-language text reproduce the Care/Fairness skew characteristic of WEIRD populations. These are not merely academic concerns: an AI system deployed globally that systematically underweights Loyalty, Authority, or Sanctity may generate advice or judgments that feel alien or offensive to billions of users whose moral intuitions rest on those foundations.</p>
+                    <p>The analyses below map the current state of MFT-LLM research. The <em>Year Distribution</em> chart tracks the rapid growth of this subfield. The <em>Foundation Radar</em> reveals which of the six foundations receive the most empirical attention and which remain understudied. <em>Top Models</em> shows concentration of testing across specific LLM families. <em>Research Approach</em> and <em>Research Type</em> distinguish benchmark-driven evaluation from theoretical work, while <em>Geographic Focus</em> and <em>Venue Types</em> expose whether the research community itself suffers from the same WEIRD sampling bias that MFT was designed to diagnose.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-mp-mft-year"></div></div>
+                    <div class="chart-card"><h3>Foundation Radar</h3><div class="chart-container" id="chart-mp-mft-radar"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-mp-mft-models"></div></div>
+                    <div class="chart-card"><h3>Research Approach</h3><div class="chart-container chart-sm" id="chart-mp-mft-approach"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-mp-mft-venue"></div></div>
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-mp-mft-regions"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-mp-mft-split"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="mp-mft-list-header"><h3>Moral Foundations Theory</h3><span class="badge" id="mp-mft-list-count">0</span></div>
+                <div class="paper-list" id="mp-mft-papers"></div>
+                <hr class="section-divider" style="margin:2rem 0">
+                <!-- Schwartz Section -->
+                <div class="section-header"><h3>Schwartz Value Theory</h3><span class="badge" id="mp-schwartz-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-schwartz">
+                    <p><strong>Schwartz's Theory of Basic Human Values</strong> (1992) is arguably the most extensively validated cross-cultural framework in all of moral and social psychology. It identifies 10 universal value types &mdash; <em>Self-Direction, Stimulation, Hedonism, Achievement, Power, Security, Conformity, Tradition, Benevolence, Universalism</em> &mdash; organized in a circular motivational continuum where adjacent values are psychologically compatible and opposing values conflict. These map onto four higher-order groups: <strong>Openness to Change</strong> vs. <strong>Conservation</strong>, and <strong>Self-Enhancement</strong> vs. <strong>Self-Transcendence</strong>. Validated across 80+ countries using the Schwartz Value Survey (SVS) and the Portrait Values Questionnaire (PVQ), this circular structure has proven remarkably stable across cultures, making it a powerful diagnostic lens for examining what values AI systems implicitly prioritize.</p>
+                    <p>For values alignment, Schwartz theory offers a uniquely structural advantage: because the 10 values form a circumplex with predictable trade-off relationships, researchers can test not just <em>which</em> values an LLM endorses, but whether the model's value profile exhibits the coherent motivational structure observed in human populations. The <strong>World Values Survey</strong> (WVS), the largest cross-cultural values dataset in the social sciences, provides population-level baselines against which LLM value profiles can be compared. Key alignment questions include whether models trained on multilingual corpora exhibit different value hierarchies depending on the language of interaction, whether fine-tuning for helpfulness systematically shifts models toward Self-Transcendence values at the expense of Conservation values, and whether value profiles remain consistent across semantically equivalent prompts &mdash; a basic test of whether the model has internalized coherent values rather than producing contextually triggered surface responses.</p>
+                    <p>The analyses below unpack these questions empirically. The <em>Value Dimensions Radar</em> shows which of the 10 values receive concentrated research attention and which remain in the periphery. <em>Higher-Order Quadrants</em> reveals the balance across the four poles of the circumplex. <em>Year Distribution</em> and <em>Top Models</em> track the growth trajectory and model coverage of Schwartz-based evaluation. <em>Geographic Focus</em> is particularly informative here: Schwartz's own work demonstrated systematic cross-national value differences, so the geographic distribution of AI-values research reveals whether the field is leveraging or ignoring that foundational insight.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-year"></div></div>
+                    <div class="chart-card"><h3>Value Dimensions Radar</h3><div class="chart-container" id="chart-mp-schwartz-radar"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-models"></div></div>
+                    <div class="chart-card"><h3>Higher-Order Quadrants</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-circumplex"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-venue"></div></div>
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-regions"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-mp-schwartz-split"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="mp-schwartz-list-header"><h3>Schwartz Value Theory</h3><span class="badge" id="mp-schwartz-list-count">0</span></div>
+                <div class="paper-list" id="mp-schwartz-papers"></div>
+            </div>
+            <!-- Sub-pane 3: Moral Reasoning -->
+            <div class="sub-pane" id="sub-mp-reasoning">
+                <div class="section-header"><h3>Moral Reasoning (Kohlberg)</h3><span class="badge" id="mp-reasoning-count">0</span></div>
+                <div class="narrative fw-accent">
+                    <p><strong>Moral reasoning</strong> research in the Kohlbergian tradition examines how moral judgment develops through qualitatively distinct stages of cognitive sophistication. Lawrence Kohlberg's (1958, 1984) cognitive-developmental theory proposes three levels &mdash; <em>preconventional</em> (self-interest), <em>conventional</em> (social norms and law), and <em>postconventional</em> (universal ethical principles) &mdash; each comprising two stages, for six stages total. The <strong>Defining Issues Test</strong> (DIT/DIT-2), developed by James Rest, operationalizes this framework as a standardized psychometric instrument and remains the most widely used measure of moral reasoning maturity. While Kohlberg's stage model has faced important critiques &mdash; notably Carol Gilligan's argument that it undervalues care-oriented reasoning and cross-cultural challenges to its claim of universality &mdash; it continues to provide the dominant developmental framework for studying moral cognition.</p>
+                    <p>For values alignment, Kohlbergian stage theory raises a provocative question: at what developmental level does an LLM reason? Early findings suggest that large language models tend to cluster at the <em>conventional</em> level (Stages 3&ndash;4), producing responses oriented toward social conformity, rule-following, and maintaining social order. This is significant because RLHF and safety fine-tuning may systematically reinforce conventional-level reasoning &mdash; training models to defer to established norms rather than engage in principled, postconventional moral reflection. Whether an AI system <em>should</em> reason at Stage 5 (social contract) or Stage 6 (universal principles) is itself an open alignment question, but understanding where models currently fall on the developmental spectrum is essential for making that determination deliberately rather than by accident.</p>
+                    <p>The charts below profile this subfield. <em>Year Distribution</em> tracks research activity over time &mdash; notably, Kohlberg-based LLM evaluation is a younger and smaller subfield than MFT or Schwartz-based work. <em>Top Models</em> reveals which LLM families have been tested for moral reasoning maturity. <em>Research Type</em> distinguishes empirical evaluation from theoretical discussion, while <em>Venue Types</em> and <em>Geographic Focus</em> illuminate the disciplinary and cultural origins of this research stream.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-mp-reasoning-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-mp-reasoning-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-mp-reasoning-split"></div></div>
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-mp-reasoning-venue"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-mp-reasoning-regions"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="mp-reasoning-list-header"><h3>Moral Reasoning Papers</h3><span class="badge" id="mp-reasoning-list-count">0</span></div>
+                <div class="paper-list" id="mp-reasoning-papers"></div>
+            </div>
+            <!-- Sub-pane 4: Moral Dilemmas -->
+            <div class="sub-pane" id="sub-mp-dilemmas">
+                <div class="section-header"><h3>Moral Dilemmas (Trolley Problems)</h3><span class="badge" id="mp-dilemmas-count">0</span></div>
+                <div class="narrative fw-accent">
+                    <p><strong>Moral dilemma</strong> research has a distinguished lineage in both philosophy and experimental psychology. Philippa Foot (1967) and Judith Jarvis Thomson (1985) formalized the trolley problem as a tool for probing moral intuitions about harm, intention, and the act/omission distinction. Joshua Greene's neuroimaging work (2001&ndash;2009) transformed the field by demonstrating that <em>personal</em> moral dilemmas (pushing someone off a bridge) and <em>impersonal</em> ones (pulling a lever) activate fundamentally different neural systems &mdash; an insight formalized as <strong>dual-process theory</strong>, which distinguishes automatic emotional responses from controlled utilitarian reasoning. More recently, the <strong>Moral Machine</strong> experiment (Awad et al., 2018) scaled dilemma research to millions of participants across 233 countries, revealing systematic cross-cultural variation in moral preferences for autonomous vehicle decision-making.</p>
+                    <p>For values alignment, moral dilemmas are uniquely revealing because they force systems to make explicit trade-offs that expose implicit value hierarchies. When an LLM resolves a trolley-type scenario, its response reveals whether it defaults to consequentialist aggregation, deontological constraints, or some hybrid strategy &mdash; and whether that default is stable across framing variations. Dual-process theory raises a further question: do LLMs exhibit anything analogous to the emotional-automatic versus controlled-deliberative distinction observed in humans, or do they produce a single-process output that merely pattern-matches to one reasoning style? Beyond the laboratory, moral dilemma research has direct deployment implications for autonomous vehicles, medical triage systems, resource allocation algorithms, and any AI application where conflicting stakeholder interests demand principled resolution. The pronounced cross-cultural variation documented by the Moral Machine project underscores that no single resolution pattern will satisfy global moral intuitions.</p>
+                    <p>The visualizations below map this research landscape. <em>Year Distribution</em> reveals the growth trajectory of dilemma-based LLM evaluation. The <em>Dilemma Paradigms</em> chart &mdash; unique to this section &mdash; shows which experimental designs dominate (classic trolley variants, Moral Machine adaptations, medical scenarios, autonomous driving, or novel constructions) and whether the field is diversifying beyond its philosophical origins. <em>Top Models</em>, <em>Research Type</em>, <em>Venue Types</em>, and <em>Geographic Focus</em> round out the picture, revealing the models, methods, publication venues, and cultural contexts that shape this critical area of alignment research.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-year"></div></div>
+                    <div class="chart-card"><h3>Dilemma Paradigms</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-paradigm"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-models"></div></div>
+                    <div class="chart-card"><h3>Research Type</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-split"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Venue Types</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-venue"></div></div>
+                    <div class="chart-card"><h3>Geographic Focus</h3><div class="chart-container chart-sm" id="chart-mp-dilemmas-regions"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="mp-dilemmas-list-header"><h3>Moral Dilemma Papers</h3><span class="badge" id="mp-dilemmas-list-count">0</span></div>
+                <div class="paper-list" id="mp-dilemmas-papers"></div>
+            </div>
+            <!-- Sub-pane 5: Cross-Framework Analysis -->
+            <div class="sub-pane" id="sub-mp-crossfw">
+                <div class="section-header"><h3>Cross-Framework Analysis</h3></div>
+                <div class="narrative">
+                    <p>How do moral psychology theories interact with AI models, normative ethics frameworks, and research methodologies? This section provides cross-cutting analytical views.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Model × Theory Heatmap</h3><div class="chart-container chart-tall" id="chart-mp-model-theory-heatmap"></div></div>
+                    <div class="chart-card"><h3>Normative Ethics Bridge</h3><div class="chart-container chart-tall" id="chart-mp-normative-bridge"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Alignment Outcomes</h3><div class="chart-container chart-sm" id="chart-mp-alignment"></div></div>
+                    <div class="chart-card"><h3>Research Methodology</h3><div class="chart-container chart-sm" id="chart-mp-methodology"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Instruments Used</h3><div class="chart-container chart-sm" id="chart-mp-instruments"></div></div>
+                    <div class="chart-card"><h3>Theoretical Sophistication</h3><div class="chart-container" id="chart-mp-sophistication"></div></div>
+                </div>
+            </div>
+            <!-- Always-visible: Moral Psychology Blind Spots & Best Practices -->
+            <div class="tab-bottom-section">
+                <h3 class="narrative-heading">Research Blind Spots</h3>
+                <div class="gap-grid">
+                    <div class="gap-card critical">
+                        <h4>Dual Process Theory</h4>
+                        <span class="gap-status critical">Zero Coverage</span>
+                        <p>Greene's automatic/controlled moral reasoning framework — foundational to moral cognition research — has no dedicated LLM benchmark despite explaining why humans give different answers to trolley variants.</p>
+                    </div>
+                    <div class="gap-card critical">
+                        <h4>Social Intuitionist Model</h4>
+                        <span class="gap-status critical">Zero Coverage</span>
+                        <p>Haidt's SIM (moral judgments are driven by intuition, not reasoning) challenges the assumption that LLM 'reasoning' reflects human moral cognition. No benchmarks test this.</p>
+                    </div>
+                    <div class="gap-card critical">
+                        <h4>Dyadic Morality</h4>
+                        <span class="gap-status critical">Zero Coverage</span>
+                        <p>Gray &amp; Schein's theory that all moral judgment reduces to perceived harm between an agent and patient — zero LLM evaluations despite growing empirical support.</p>
+                    </div>
+                    <div class="gap-card severe">
+                        <h4>Moral Identity</h4>
+                        <span class="gap-status severe">Minimal Coverage</span>
+                        <p>Aquino &amp; Reed's moral identity theory — how self-concept shapes moral behavior — is virtually untested in LLMs despite relevance to persona-based alignment.</p>
+                    </div>
+                </div>
+                <h3 class="narrative-heading">Best Practices</h3>
+                <div class="narrative">
+                    <p><strong>Use multiple complementary frameworks</strong>, not just one. MFT captures moral intuitions but misses deliberative reasoning — complement with DIT. Schwartz values measure cross-cultural value priorities — ideal for alignment testing. Trolley paradigms are overused and ecologically invalid — complement with everyday moral scenarios.</p>
+                    <p><strong>Moral development stages</strong> (Kohlberg) can assess LLM reasoning sophistication — does the model reason at pre-conventional, conventional, or post-conventional levels?</p>
+                    <p><strong>Descriptive alignment ≠ normative correctness:</strong> An LLM that perfectly matches human moral psychology may still be 'wrong' by normative standards. Matching human biases and heuristics is not the same as ethical reasoning.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 8: Religious Values -->
+        <section class="tab-pane" id="pane-religious" role="tabpanel" aria-labelledby="tab-religious">
+            <div class="sub-nav" id="rel-sub-nav">
+                <button class="sub-btn active" data-sub="rel-overview">Overview</button>
+                <button class="sub-btn" data-sub="rel-islamic">Islam</button>
+                <button class="sub-btn" data-sub="rel-christianity">Christianity</button>
+                <button class="sub-btn" data-sub="rel-judaism">Judaism</button>
+                <button class="sub-btn" data-sub="rel-buddhism">Buddhism</button>
+                <button class="sub-btn" data-sub="rel-hinduism">Hinduism</button>
+                <button class="sub-btn" data-sub="rel-confucian">Confucian</button>
+                <button class="sub-btn" data-sub="rel-shinto">Shinto</button>
+                <button class="sub-btn" data-sub="rel-ubuntu">Ubuntu</button>
+                <button class="sub-btn" data-sub="rel-indigenous">Indigenous</button>
+                <button class="sub-btn" data-sub="rel-other">Other</button>
+            </div>
+            <div class="sub-pane active" id="sub-rel-overview">
+                <div class="narrative">
+                    <p><strong>Religious ethics</strong> shape moral reasoning for over 5 billion people worldwide — 1.2B Muslims, 2.4B Christians, 1.2B Hindus, 500M Buddhists, 400M+ practitioners of East Asian traditions, and hundreds of millions following Indigenous and African moral philosophies. LLMs deployed globally must navigate these diverse moral frameworks, yet the current benchmark landscape is <strong>radically imbalanced</strong>: Islamic QA systems dominate with 11+ benchmarks, while most other traditions have zero or one dedicated evaluation.</p>
+                    <p>This section maps which religious ethical traditions the vault's literature engages with, identifies the most critical coverage gaps, and outlines what rigorous evaluation would require for each tradition. The goal is not to rank or compare religions, but to ensure LLM evaluation reflects the <strong>full spectrum of human moral reasoning</strong>.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Tradition Distribution</h3><div class="chart-container" id="chart-rel-trad-bar"></div></div>
+                    <div class="chart-card"><h3>Tradition Timeline</h3><div class="chart-container" id="chart-rel-timeline"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Tradition Co-occurrence</h3><div class="chart-container chart-tall" id="chart-rel-cooccurrence"></div></div>
+                </div>
+            </div>
+            <!-- Islamic (unchanged) -->
+            <div class="sub-pane" id="sub-rel-islamic">
+                <div class="section-header"><h3>Islamic Ethics</h3><span class="badge" id="rel-islamic-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-islamic">
+                    <p><strong>Islamic ethics</strong> derives from <em>Usul al-Fiqh</em> (principles of jurisprudence), with the <em>Maqasid al-Shariah</em> (5 higher objectives: protection of religion, life, intellect, progeny, and wealth) as the overarching framework. Moral actions are classified on a 5-point scale: <em>fard/wajib</em> (obligatory), <em>mandub/mustahabb</em> (recommended), <em>mubah</em> (permissible), <em>makruh</em> (discouraged), and <em>haram</em> (forbidden).</p>
+                    <p>The fatwa reasoning chain — question &rarr; Quran &rarr; Hadith &rarr; Ijma (consensus) &rarr; Qiyas (analogy) — represents a structured, source-hierarchy-driven form of moral reasoning. LLM evaluation in this space is the most developed among religious traditions, with benchmarks for Quranic QA, Hadith verification, Fatwa generation, and Sharia compliance checking.</p>
+                    <p><strong>Key challenge:</strong> Diversity within Islam (Sunni/Shia, 4 madhahib schools of jurisprudence), context-sensitivity of fatwas, and the critical safety concern of models 'hallucinating' religious rulings for 1.2B potential users.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-islamic-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-islamic-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Islamic Knowledge Domains</h3><div class="chart-container" id="chart-rel-islamic-domains"></div></div>
+                    <div class="chart-card"><h3>Geographic & Linguistic Origins</h3><div class="chart-container" id="chart-rel-islamic-langgeo"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Resource Building vs. Bias Detection</h3><div class="chart-container" id="chart-rel-islamic-streams"></div></div>
+                    <div class="chart-card"><h3>Islamic Textual Source Coverage</h3><div class="chart-container" id="chart-rel-islamic-sources"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-islamic-sankey"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-islamic-list-header"><h3>Islamic Ethics</h3><span class="badge" id="rel-islamic-list-count">0</span></div>
+                <div class="paper-list" id="rel-islamic-papers"></div>
+            </div>
+            <!-- Christianity (split from Christian-Jewish) -->
+            <div class="sub-pane" id="sub-rel-christianity">
+                <div class="section-header"><h3>Christian Ethics</h3><span class="badge" id="rel-christianity-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-christianity">
+                    <p><strong>Christian ethics</strong> spans multiple traditions: the <em>Natural Law</em> tradition (Aquinas) holds that morality is discoverable by reason and grounded in human nature. <em>Divine Command Theory</em> grounds morality in God's will. Thomistic virtue ethics adds theological virtues (faith, hope, charity) to the cardinal virtues. Protestant traditions emphasize <em>sola scriptura</em> (scripture alone), while Liberation Theology prioritizes the 'preferential option for the poor.'</p>
+                    <p><strong>LLM application:</strong> Bible QA systems exist, but few test moral reasoning. Challenges include denominational diversity (Catholic vs. Protestant vs. Orthodox), faith-reason tensions, and translation issues across Bible versions. The <em>Imago Dei</em> principle — that humans are made in God's image — raises critical questions about whether AI systems can possess moral status within Christian anthropology.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-christianity-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-christianity-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Denominational Landscape</h3><div class="chart-container" id="chart-rel-christianity-denom"></div></div>
+                    <div class="chart-card"><h3>Theological Concepts</h3><div class="chart-container" id="chart-rel-christianity-concepts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Sacred Text Coverage</h3><div class="chart-container" id="chart-rel-christianity-texts"></div></div>
+                    <div class="chart-card"><h3>Research Focus</h3><div class="chart-container" id="chart-rel-christianity-focus"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Normative Ethics Overlap</h3><div class="chart-container" id="chart-rel-christianity-normative"></div></div>
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container" id="chart-rel-christianity-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-christianity-list-header"><h3>Christian Ethics</h3><span class="badge" id="rel-christianity-list-count">0</span></div>
+                <div class="paper-list" id="rel-christianity-papers"></div>
+            </div>
+            <!-- Judaism (split from Christian-Jewish) -->
+            <div class="sub-pane" id="sub-rel-judaism">
+                <div class="section-header"><h3>Jewish Ethics</h3><span class="badge" id="rel-judaism-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-judaism">
+                    <p><strong>Jewish ethics</strong> centers on <em>Halakhic reasoning</em> — Jewish law derived from Torah, Talmud, and rabbinic commentary. Key principles include <em>Tikkun Olam</em> (repairing the world), <em>Pikuach Nefesh</em> (sanctity of life overrides most commandments), <em>Tzedakah</em> (righteous giving as obligation), and <em>Mussar</em> (character development). <em>B'tselem Elohim</em> (in the image of God) anchors human dignity.</p>
+                    <p><strong>LLM application:</strong> Halakhic reasoning — structured, precedent-based, and analogical — is arguably well-suited for LLM evaluation but has essentially zero dedicated benchmarks. The 2,000+ year tradition of structured ethical argumentation (Talmudic dialectic) represents an untapped resource for AI ethics evaluation.</p>
+                    <p><em>Note: With only ~5 papers, some charts below may be sparse. This itself highlights the critical coverage gap.</em></p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-judaism-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-judaism-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Core Concepts</h3><div class="chart-container" id="chart-rel-judaism-concepts"></div></div>
+                    <div class="chart-card"><h3>Textual Sources</h3><div class="chart-container" id="chart-rel-judaism-texts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Research Focus</h3><div class="chart-container" id="chart-rel-judaism-focus"></div></div>
+                    <div class="chart-card"><h3>Normative Ethics Overlap</h3><div class="chart-container" id="chart-rel-judaism-normative"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-judaism-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-judaism-list-header"><h3>Jewish Ethics</h3><span class="badge" id="rel-judaism-list-count">0</span></div>
+                <div class="paper-list" id="rel-judaism-papers"></div>
+            </div>
+            <!-- Buddhism (split from Dharmic) -->
+            <div class="sub-pane" id="sub-rel-buddhism">
+                <div class="section-header"><h3>Buddhist Ethics</h3><span class="badge" id="rel-buddhism-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-buddhism">
+                    <p><strong>Buddhist ethics</strong> derives from the <em>Four Noble Truths</em>, the <em>Eightfold Path</em>, and the <em>Three Marks of Existence</em> (impermanence, suffering, non-self). Core moral principles include <em>ahimsa</em> (non-harm), <em>karuna</em> (compassion), <em>metta</em> (loving-kindness), and <em>upaya</em> (skillful means). The <em>Middle Way</em> serves as both metaphysical and ethical principle. <em>Dependent Origination</em> (pratityasamutpada) and <em>Sunyata</em> (emptiness) provide the metaphysical ground for ethical reasoning.</p>
+                    <p><strong>LLM application:</strong> Ahimsa aligns naturally with LLM safety/harmlessness objectives. The <em>Humanistic Buddhism Corpus</em> (HBC) is the most relevant benchmark. Buddhist ethics spans diverse schools — Theravada, Mahayana, Vajrayana, Zen, and Secular Buddhism — each with distinct emphases that challenge monolithic evaluation.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-buddhism-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-buddhism-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>School Detection</h3><div class="chart-container" id="chart-rel-buddhism-schools"></div></div>
+                    <div class="chart-card"><h3>Core Concepts</h3><div class="chart-container" id="chart-rel-buddhism-concepts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Textual Sources</h3><div class="chart-container" id="chart-rel-buddhism-texts"></div></div>
+                    <div class="chart-card"><h3>Research Focus</h3><div class="chart-container" id="chart-rel-buddhism-focus"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Cultural Contexts</h3><div class="chart-container" id="chart-rel-buddhism-cultures"></div></div>
+                    <div class="chart-card"><h3>Language Coverage</h3><div class="chart-container" id="chart-rel-buddhism-langs"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-buddhism-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-buddhism-list-header"><h3>Buddhist Ethics</h3><span class="badge" id="rel-buddhism-list-count">0</span></div>
+                <div class="paper-list" id="rel-buddhism-papers"></div>
+            </div>
+            <!-- Hinduism (split from Dharmic) -->
+            <div class="sub-pane" id="sub-rel-hinduism">
+                <div class="section-header"><h3>Hindu Ethics</h3><span class="badge" id="rel-hinduism-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-hinduism">
+                    <p><strong>Hindu ethics</strong> centers on <em>dharma</em> as both cosmic order and individual moral duty. <em>Karma</em> (moral causation across lifetimes), the four <em>purusharthas</em> (goals: dharma, artha, kama, moksha), and <em>varna-ashrama-dharma</em> (context-dependent duty) create a deeply contextual ethical framework. <em>Svadharma</em> — one's personal duty determined by role and circumstance — challenges LLMs' need for universal rules.</p>
+                    <p><strong>LLM application:</strong> <em>Ahimsa</em> (non-harm) is shared across Indic traditions. The textual tradition spans the Vedas, Upanishads, Bhagavad Gita, and Dharmashastra. BRAND (2025) covers Hindu religious bias but near-zero benchmarks test dharma-based moral reasoning despite 1.2B Hindu adherents. Six philosophical schools (Vedanta, Samkhya, Yoga, Nyaya, Vaisheshika, Mimamsa) offer distinct epistemological and ethical frameworks.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-hinduism-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-hinduism-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Textual Tradition</h3><div class="chart-container" id="chart-rel-hinduism-texts"></div></div>
+                    <div class="chart-card"><h3>Core Concepts</h3><div class="chart-container" id="chart-rel-hinduism-concepts"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Philosophical Schools</h3><div class="chart-container" id="chart-rel-hinduism-schools"></div></div>
+                    <div class="chart-card"><h3>Research Focus</h3><div class="chart-container" id="chart-rel-hinduism-focus"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Cultural Contexts</h3><div class="chart-container" id="chart-rel-hinduism-cultures"></div></div>
+                    <div class="chart-card"><h3>Language Coverage</h3><div class="chart-container" id="chart-rel-hinduism-langs"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-hinduism-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-hinduism-list-header"><h3>Hindu Ethics</h3><span class="badge" id="rel-hinduism-list-count">0</span></div>
+                <div class="paper-list" id="rel-hinduism-papers"></div>
+            </div>
+            <!-- Confucian (unchanged structure) -->
+            <div class="sub-pane" id="sub-rel-confucian">
+                <div class="section-header"><h3>Confucian Ethics</h3><span class="badge" id="rel-confucian-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-confucian">
+                    <p><strong>Confucian ethics</strong> centers on five core virtues: <em>Ren</em> (仁, benevolence/humaneness), <em>Li</em> (禮, ritual propriety), <em>Yi</em> (義, righteousness), <em>Zhi</em> (智, wisdom), and <em>Xin</em> (信, fidelity/trustworthiness). The <em>Five Relationships</em> — ruler-subject, parent-child, husband-wife, elder-younger sibling, friend-friend — each carry reciprocal duties that are hierarchical but mutually obligated.</p>
+                    <p>The <em>Junzi</em> (君子, exemplary person) is the moral ideal, achieved through study, reflection, and practice. Mencius' four innate moral sprouts — compassion &rarr; ren, shame &rarr; yi, deference &rarr; li, right/wrong &rarr; zhi — provide a developmental moral psychology. Social harmony (和, <em>he</em>) serves as the overriding moral goal.</p>
+                    <p><strong>LLM application:</strong> Confucian ethics is <em>relational and contextual</em> — who is speaking to whom fundamentally matters. This differs from rule-based Western ethics that most LLMs are trained on. <em>STORAL-ZH</em> and <em>CMoralEval</em> benchmark Chinese moral reasoning with Confucian grounding. Chinese LLMs (Qwen, ChatGLM, Baichuan) may exhibit Confucian reasoning patterns not seen in Western-trained models.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-confucian-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-confucian-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Confucian-Sphere Cultural Footprint</h3><div class="chart-container" id="chart-rel-confucian-cultures"></div></div>
+                    <div class="chart-card"><h3>Western Framework Overlap</h3><div class="chart-container" id="chart-rel-confucian-frameworks"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Chinese vs. Western LLMs</h3><div class="chart-container" id="chart-rel-confucian-llms"></div></div>
+                    <div class="chart-card"><h3>CJK Language Coverage</h3><div class="chart-container" id="chart-rel-confucian-langs"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Empirical vs. Theoretical Trajectory</h3><div class="chart-container" id="chart-rel-confucian-trajectory"></div></div>
+                    <div class="chart-card"><h3>Confucian Concept Frequency</h3><div class="chart-container" id="chart-rel-confucian-concepts"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-confucian-list-header"><h3>Confucian Ethics</h3><span class="badge" id="rel-confucian-list-count">0</span></div>
+                <div class="paper-list" id="rel-confucian-papers"></div>
+            </div>
+            <!-- Shinto (split from Ubuntu/Indigenous) -->
+            <div class="sub-pane" id="sub-rel-shinto">
+                <div class="section-header"><h3>Shinto Ethics</h3><span class="badge" id="rel-shinto-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-shinto">
+                    <p><strong>Shinto</strong>, Japan's indigenous spiritual tradition, centers on <em>kami</em> (spirits/gods) inhabiting natural phenomena and the concept of <em>wa</em> (harmony). Its emphasis on ritual purity (<em>harae</em>), coexistence with nature, and animistic worldview has generated a unique strain of 'techno-animism' literature exploring whether robots and AI can possess <em>kami</em>-like qualities — a question with no parallel in Abrahamic or Dharmic traditions.</p>
+                    <p><strong>LLM application:</strong> Shinto's animistic framework raises unique questions about AI moral status, robot personhood, and the ethics of anthropomorphism in Japanese cultural context. The concept of <em>musubi</em> (creative interconnection) offers a relational framework for understanding human-AI interaction.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-shinto-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-shinto-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Core Concepts</h3><div class="chart-container" id="chart-rel-shinto-concepts"></div></div>
+                    <div class="chart-card"><h3>Research Themes</h3><div class="chart-container" id="chart-rel-shinto-themes"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Cultural Context</h3><div class="chart-container" id="chart-rel-shinto-cultures"></div></div>
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container" id="chart-rel-shinto-cotrad"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Gap vs. Vault Average</h3><div class="chart-container chart-sm" id="chart-rel-shinto-gap"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-shinto-list-header"><h3>Shinto Ethics</h3><span class="badge" id="rel-shinto-list-count">0</span></div>
+                <div class="paper-list" id="rel-shinto-papers"></div>
+            </div>
+            <!-- Ubuntu (split from Ubuntu/Indigenous) -->
+            <div class="sub-pane" id="sub-rel-ubuntu">
+                <div class="section-header"><h3>Ubuntu Ethics</h3><span class="badge" id="rel-ubuntu-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-ubuntu">
+                    <p><strong>Ubuntu ethics</strong> is grounded in the principle <em>umuntu ngumuntu ngabantu</em> — "a person is a person through other persons." Personhood is not a given but is achieved through relationships, communal participation, and moral conduct. Core values include communal harmony, consensus-based decision-making (<em>indaba</em>), restorative justice, and the inseparability of individual well-being from collective flourishing. Ubuntu rejects atomistic individualism in favor of relational ontology.</p>
+                    <p><strong>LLM application:</strong> Ubuntu's relational ontology challenges the atomistic, individual-agent framing of most LLM evaluations. There are currently <em>zero dedicated benchmarks</em> for Ubuntu moral reasoning — a critical gap given that Ubuntu offers fundamentally different conceptions of personhood, agency, and moral responsibility than Western individualist ethics.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-ubuntu-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-ubuntu-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Core Concepts</h3><div class="chart-container" id="chart-rel-ubuntu-concepts"></div></div>
+                    <div class="chart-card"><h3>Research Themes</h3><div class="chart-container" id="chart-rel-ubuntu-themes"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Pan-African Geographic Spread</h3><div class="chart-container" id="chart-rel-ubuntu-geo"></div></div>
+                    <div class="chart-card"><h3>Gap vs. Vault Average</h3><div class="chart-container" id="chart-rel-ubuntu-gap"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-ubuntu-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-ubuntu-list-header"><h3>Ubuntu Ethics</h3><span class="badge" id="rel-ubuntu-list-count">0</span></div>
+                <div class="paper-list" id="rel-ubuntu-papers"></div>
+            </div>
+            <!-- Indigenous (split from Ubuntu/Indigenous) -->
+            <div class="sub-pane" id="sub-rel-indigenous">
+                <div class="section-header"><h3>Indigenous Ethics</h3><span class="badge" id="rel-indigenous-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-indigenous">
+                    <p><strong>Indigenous ethical frameworks</strong> span thousands of distinct traditions — First Nations, Aboriginal Australian, Native American, Maori, and many others — yet share common threads: kinship obligations extending to land and non-human beings, reciprocity with nature, intergenerational responsibility (Seven Generations principle), and oral tradition as the primary medium for moral knowledge. Ethics is embedded in place, story, and ceremony rather than codified in texts.</p>
+                    <p><strong>LLM challenge:</strong> 5,000+ distinct Indigenous peoples cannot be reduced to a single benchmark. Data sovereignty frameworks (OCAP, CARE principles) complicate whether such benchmarks <em>should</em> be created without community governance. These traditions are <em>oral rather than textual</em> (limited training data), <em>community-embedded rather than individual</em> (moral authority is collective), and <em>land-based rather than abstract</em>.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-indigenous-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-indigenous-models"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Specific Traditions</h3><div class="chart-container" id="chart-rel-indigenous-traditions"></div></div>
+                    <div class="chart-card"><h3>Core Themes</h3><div class="chart-container" id="chart-rel-indigenous-themes"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Geographic Origins</h3><div class="chart-container" id="chart-rel-indigenous-geo"></div></div>
+                    <div class="chart-card"><h3>Gap vs. Vault Average</h3><div class="chart-container" id="chart-rel-indigenous-gap"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Cross-Tradition Connections</h3><div class="chart-container chart-sm" id="chart-rel-indigenous-cotrad"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-indigenous-list-header"><h3>Indigenous Ethics</h3><span class="badge" id="rel-indigenous-list-count">0</span></div>
+                <div class="paper-list" id="rel-indigenous-papers"></div>
+            </div>
+            <!-- Other Traditions (new) -->
+            <div class="sub-pane" id="sub-rel-other">
+                <div class="section-header"><h3>Other Traditions</h3><span class="badge" id="rel-other-count">0</span></div>
+                <div class="narrative fw-accent fw-accent-other">
+                    <p><strong>Additional religious traditions</strong> — including Jainism, Sikhism, Taoism, Baha'i, and Zoroastrianism — each contain rich ethical frameworks with distinct implications for AI evaluation. <em>Jain ethics</em> emphasizes extreme non-violence (<em>ahimsa</em>) and epistemological humility (<em>anekantavada</em> — many-sidedness). <em>Sikh ethics</em> centers on selfless service (<em>seva</em>) and radical equality. <em>Taoist ethics</em> teaches <em>wu wei</em> (effortless action) and harmony with the Dao.</p>
+                    <p><em>Note: These traditions have minimal representation in the vault (0-2 papers each), reflecting a critical gap in AI ethics research coverage.</em></p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Year Distribution</h3><div class="chart-container chart-sm" id="chart-rel-other-year"></div></div>
+                    <div class="chart-card"><h3>Top Models</h3><div class="chart-container chart-sm" id="chart-rel-other-models"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Tradition Summary</h3><div class="trad-comparison-table" id="rel-other-summary"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Key Concepts per Tradition</h3><div class="chart-container" id="chart-rel-other-concepts"></div></div>
+                    <div class="chart-card"><h3>Coverage Gap</h3><div class="chart-container" id="chart-rel-other-gap"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="rel-other-list-header"><h3>Other Traditions</h3><span class="badge" id="rel-other-list-count">0</span></div>
+                <div class="paper-list" id="rel-other-papers"></div>
+            </div>
+            <!-- Always-visible: Religious Values Best Practices -->
+            <div class="tab-bottom-section">
+                <h3 class="narrative-heading">Religious Ethics: Landscape & Gaps</h3>
+                <div class="narrative">
+                    <p><strong>The landscape is radically imbalanced:</strong> Islam has 11+ benchmarks, most other traditions have 0–1. Religious QA (factual recall about scriptures) is <em>not</em> the same as religious <em>ethics</em> benchmarking (moral reasoning within a tradition's framework).</p>
+                    <p><strong>Critical needs:</strong> Benchmarks testing moral reasoning within each tradition, not just factual recall. Cross-tradition consistency tests — does an LLM reason differently about the same dilemma when framed in Islamic vs. Christian vs. Buddhist terms? And religious sensitivity — avoiding benchmarks that reduce traditions to stereotypes.</p>
+                    <p><strong>Missing entirely:</strong> Sikhism (30M+ adherents, seva and equality principles), Taoism/Daoism (wu wei, balance of opposites), Shinto (purity, harmony with nature), Jainism (most rigorous ahimsa tradition, anekantavada/non-absolutism), and most Indigenous ethical systems are completely absent from LLM evaluation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 9: Models & LLMs -->
+        <section class="tab-pane" id="pane-models" role="tabpanel" aria-labelledby="tab-models">
+            <div class="sub-nav" id="models-sub-nav">
+                <button class="sub-btn active" data-sub="models-overview">Overview</button>
+                <button class="sub-btn" data-sub="models-depth">Model Depth</button>
+            </div>
+            <div class="sub-pane active" id="sub-models-overview">
+                <div class="narrative">
+                    <p><strong>Which LLMs get evaluated — and which do not — defines the boundaries of what we know about AI alignment.</strong> This section maps the landscape of model evaluation across the vault's literature, drawn from both LLM assessment metadata and benchmark survey results. The distribution reveals a pronounced concentration: a small number of proprietary model families (GPT, Claude, LLaMA) dominate the evaluation literature, while most open-source and non-English-centric models remain under-tested. The timeline tracks the rapid post-2022 expansion of evaluation work, and the repository chart shows where researchers share their evaluation artifacts.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>LLM Model Families</h3><div class="chart-container chart-tall" id="chart-llm-models"></div></div>
+                    <div class="chart-card"><h3>Model Coverage Timeline</h3><div class="chart-container chart-tall" id="chart-llm-timeline"></div></div>
+                    <div class="chart-card"><h3>Data Repository Distribution</h3><div class="chart-container" id="chart-llm-repos"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="models-ov-list-header"><h3>LLM-Assessed Papers</h3><span class="badge" id="models-ov-list-count">0</span></div>
+                <div class="paper-list" id="models-ov-papers"></div>
+            </div>
+            <div class="sub-pane" id="sub-models-depth">
+                <div class="narrative">
+                    <p><strong>Model depth analysis</strong> reveals which LLMs have been evaluated broadly across ethical frameworks and cultural contexts, versus those tested narrowly. A model tested only on WEIRD populations with Western ethical frameworks has unknown alignment properties for the majority of the world's population.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Model x Ethical Framework</h3><div class="chart-container chart-tall" id="chart-md-model-fw"></div></div>
+                    <div class="chart-card"><h3>Model Cultural Exposure</h3><div class="chart-container chart-tall" id="chart-md-model-culture"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Open vs. Closed Source Models</h3><div class="chart-container" id="chart-md-open-closed"></div></div>
+                    <div class="chart-card"><h3>Model Coverage Breadth</h3><div class="chart-container" id="chart-md-breadth"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="models-depth-list-header"><h3>Model Depth Papers</h3><span class="badge" id="models-depth-list-count">0</span></div>
+                <div class="paper-list" id="models-depth-papers"></div>
+            </div>
+        </section>
+
+        <!-- Tab 10: Authors & Collaboration (v10) -->
+        <section class="tab-pane" id="pane-authors" role="tabpanel" aria-labelledby="tab-authors">
+            <div class="sub-nav" id="authors-sub-nav">
+                <button class="sub-btn active" data-sub="authors-overview">Overview</button>
+                <button class="sub-btn" data-sub="authors-prolific">Key Voices</button>
+                <button class="sub-btn" data-sub="authors-collab">Collaboration</button>
+                <button class="sub-btn" data-sub="authors-diversity">Diversity &amp; Representation</button>
+                <button class="sub-btn" data-sub="authors-quality">Data Quality</button>
+            </div>
+
+            <!-- Sub-tab 1: Overview -->
+            <div class="sub-pane active" id="sub-authors-overview">
+                <div class="narrative">
+                    <p><strong>Who</strong> publishes on AI ethics — and how they collaborate — shapes the field's direction. This tab maps the 9,300+ researchers behind the vault's 2,043 papers, revealing patterns of productivity, team formation, and collaboration networks. The median team size of 4 co-authors reflects AI ethics' interdisciplinary character, while the growth of new entrants each year shows a field still rapidly expanding.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-auth-unique">—</div><div class="kpi-label">Unique Authors</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-auth-median">—</div><div class="kpi-label">Median Team Size</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-auth-solo">—</div><div class="kpi-label">Single-Author Papers</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-auth-prolific3">—</div><div class="kpi-label">Prolific (3+ papers)</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-auth-profiles">—</div><div class="kpi-label">Author Profiles</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Team Size Distribution</h3><div class="chart-container" id="chart-auth-team-dist"></div></div>
+                    <div class="chart-card"><h3>Author Productivity (Lotka's Law)</h3><div class="chart-container" id="chart-auth-lotka"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>New vs Returning Authors per Year</h3><div class="chart-container" id="chart-auth-new-year"></div></div>
+                    <div class="chart-card"><h3>Median Team Size Over Time</h3><div class="chart-container" id="chart-auth-team-time"></div></div>
+                </div>
+            </div>
+
+            <!-- Sub-tab 2: Key Voices -->
+            <div class="sub-pane" id="sub-authors-prolific">
+                <div class="narrative">
+                    <p><strong>A small number of researchers shape the field disproportionately.</strong> The top 30 authors are shown with their position breakdown — first author (principal contributor), last author (typically lab director), or middle position. The radar chart reveals how the most prolific voices distribute across the vault's six analytical dimensions, while the timeline heatmap shows whether their output is sustained or concentrated in bursts.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Top 30 Authors by Paper Count</h3><div class="chart-container chart-tall" id="chart-auth-top30"></div></div>
+                </div>
+                <div class="section-header section-header-list" id="auth-top30-list-header">
+                    <h3>Author Papers</h3>
+                    <span class="badge" id="auth-top30-list-count">0</span>
+                </div>
+                <div class="paper-list" id="auth-top30-papers"></div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top 10 Author Subfield Radar</h3><div class="chart-container chart-tall" id="chart-auth-radar"></div></div>
+                    <div class="chart-card"><h3>Top 15 Author Timeline Heatmap</h3><div class="chart-container chart-tall" id="chart-auth-heatmap"></div></div>
+                </div>
+            </div>
+
+            <!-- Sub-tab 3: Collaboration -->
+            <div class="sub-pane" id="sub-authors-collab">
+                <div class="narrative">
+                    <p><strong>Collaboration networks reveal the social fabric of research.</strong> The force-directed graph maps co-authorship ties among the 80 most prolific authors — node size reflects paper count, edge thickness reflects shared publications. The chord diagram shows the strongest bilateral collaboration channels among the top 30 researchers. Together, they expose both tight research clusters and isolated silos.</p>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card">
+                        <h3>Collaboration Network (Top 80 Authors)</h3>
+                        <div class="net-color-bar" id="net-color-bar">
+                            <span class="net-color-label">Color by:</span>
+                            <button class="net-color-btn active" data-color="dimension">Research Focus</button>
+                            <button class="net-color-btn" data-color="role">Author Role</button>
+                            <button class="net-color-btn" data-color="venue">Venue Type</button>
+                            <button class="net-color-btn" data-color="era">Research Era</button>
+                            <button class="net-color-btn" data-color="collab">Collaboration Breadth</button>
+                        </div>
+                        <div id="net-gradient-legend" style="display:none"></div>
+                        <div class="chart-container" style="height:825px" id="chart-auth-network"></div>
+                    </div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Top 20 Co-Author Pairs</h3><div class="chart-container chart-tall" id="chart-auth-pairs"></div></div>
+                    <div class="chart-card"><h3>Team Composition</h3><div class="chart-container" id="chart-auth-team-comp"></div></div>
+                </div>
+                <div class="chart-grid-1">
+                    <div class="chart-card"><h3>Co-Authorship Chord Diagram (Top 30)</h3><div class="chart-container" style="height:550px" id="chart-auth-chord"></div></div>
+                </div>
+            </div>
+
+            <!-- Sub-tab 4: Diversity & Representation -->
+            <div class="sub-pane" id="sub-authors-diversity">
+                <div class="narrative">
+                    <p><strong>Who gets to define AI ethics?</strong> The concentration of authorship matters: a Lorenz curve reveals how evenly publication output is distributed. AI Lab affiliations show the role of major industry players, while the equality line in the Lorenz chart provides a benchmark for comparison.</p>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>AI Lab Contributions</h3><div class="chart-container chart-tall" id="chart-auth-labs"></div></div>
+                    <div class="chart-card"><h3>Lorenz Curve — Publication Equality</h3><div class="chart-container chart-tall" id="chart-auth-lorenz"></div></div>
+                </div>
+            </div>
+
+            <!-- Sub-tab 5: Data Quality -->
+            <div class="sub-pane" id="sub-authors-quality">
+                <div class="narrative">
+                    <p><strong>Author metadata quality</strong> directly affects the reliability of collaboration analysis. This section provides transparency on data completeness — how many papers have full author lists, how many names are abbreviated, and what fraction of authors have enriched profiles.</p>
+                </div>
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-authq-total">—</div><div class="kpi-label">Total Papers</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-authq-full">—</div><div class="kpi-label">Full Author Lists</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-authq-abbrev">—</div><div class="kpi-label">Abbreviated Names</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-authq-profiles">—</div><div class="kpi-label">Author Profiles</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpi-authq-enriched">—</div><div class="kpi-label">Enriched Profiles</div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="chart-card"><h3>Author Data Completeness</h3><div class="chart-container" id="chart-authq-completeness"></div></div>
+                    <div class="chart-card"><h3>Profile Enrichment Coverage</h3><div class="chart-container" id="chart-authq-enrichment"></div></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>CEI Literature Vault Dashboard v10 | Generated by <code>generate_vault_dashboard_6.py</code></span>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">&uarr;</button>
+
+    <!-- Scripts: core data (sync), then app + charts, then detail data (async) -->
+    <script src="data-core.js"></script>
+    <script src="app.js"></script>
+    <script src="charts.js"></script>
+    <script async src="data-detail.js"></script>
+</body>
+</html>
